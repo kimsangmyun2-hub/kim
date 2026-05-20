@@ -3,170 +3,66 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>K-apt 입찰 검색</title>
+    <title>아파트관리 통합검색</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
-    <main class="shell">
-      <section class="topbar">
+  <body class="portal-body">
+    <main class="portal-shell">
+      <section class="portal-hero">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="mark-roof"></span>
+            <span class="mark-tower mark-left"></span>
+            <span class="mark-tower mark-right"></span>
+            <span class="mark-search"></span>
+          </div>
+          <div>
+            <p class="eyebrow">관리업무 자료를 한 곳에서</p>
+            <h1>아파트관리 통합검색</h1>
+            <p class="maker">관리사무소장 김상면</p>
+          </div>
+        </div>
+        <p class="portal-copy">
+          입찰, 판례, 장기수선, 자료 검색을 한 화면에서 출발할 수 있도록 구성한 통합 메뉴입니다.
+        </p>
+      </section>
+
+      <section class="portal-menu" aria-label="통합검색 메뉴">
+        <a class="menu-card primary" href="./kapt">
+          <span class="app-logo kapt-logo">K-apt</span>
+          <strong>입찰검색·낙찰분석</strong>
+          <small>입찰공고, 입찰결과, 평균 낙찰금액, 지역별 분석</small>
+        </a>
+        <a class="menu-card" href="https://panapp.duckdns.org">
+          <span class="app-logo case-logo">공동주택관리실무연구회</span>
+          <strong>판례검색</strong>
+          <small>공동주택 관리 관련 판례 검색</small>
+        </a>
+        <a class="menu-card pending" href="#" aria-disabled="true">
+          <span class="menu-kicker">PLAN</span>
+          <strong>장기수선 검색</strong>
+          <small>장기수선계획, 충당금, 가이드라인 자료</small>
+        </a>
+        <a class="menu-card pending" href="#" aria-disabled="true">
+          <span class="menu-kicker">DOCS</span>
+          <strong>자료·PDF 검색</strong>
+          <small>고시, 매뉴얼, 내부 문서 통합검색</small>
+        </a>
+      </section>
+
+      <section class="logo-proposal">
         <div>
-          <p class="eyebrow">공동주택 입찰 분석 도구</p>
-          <h1>K-apt 입찰 검색</h1>
-          <p class="maker">기획·제작: 관리사무소장 김상면</p>
+          <span class="proposal-label">로고 제안</span>
+          <strong>아파트관리 통합검색</strong>
+          <p>건물 형태와 검색 원을 결합한 표시로, 관리업무 자료를 찾아 연결한다는 의미입니다.</p>
         </div>
-        <div class="source-note">공공데이터 API를 서버에서 안전하게 조회합니다.</div>
-      </section>
-
-      <section class="panel controls">
-        <div class="grid">
-          <label class="field">
-            <span>데이터</span>
-            <select id="dataset">
-              <option value="notice">입찰공고</option>
-              <option value="result">입찰결과</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>검색 방식</span>
-            <select id="mode">
-              <option value="keyword">검색어</option>
-              <option value="apartment">아파트명</option>
-              <option value="method">입찰방법</option>
-              <option value="kind">입찰종류</option>
-              <option value="status">입찰상태</option>
-              <option value="aptCode">단지코드</option>
-            </select>
-          </label>
-          <label class="field value-field">
-            <span id="valueLabel">검색어</span>
-            <input id="searchValue" type="text" placeholder="예: 승강기, CCTV, 방수" />
-          </label>
-          <label class="field">
-            <span>지역 필터</span>
-            <select id="regionFilter">
-              <option value="">전체</option>
-              <option value="11">서울</option>
-              <option value="26">부산</option>
-              <option value="27">대구</option>
-              <option value="28">인천</option>
-              <option value="29">광주</option>
-              <option value="30">대전</option>
-              <option value="31">울산</option>
-              <option value="36">세종</option>
-              <option value="41">경기</option>
-              <option value="43">충북</option>
-              <option value="44">충남</option>
-              <option value="46">전남</option>
-              <option value="47">경북</option>
-              <option value="48">경남</option>
-              <option value="50">제주</option>
-              <option value="51">강원</option>
-              <option value="52">전북</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>검색년도</span>
-            <input id="searchYear" type="number" min="2018" max="2026" value="2026" />
-          </label>
-          <label class="field">
-            <span>조회 건수</span>
-            <select id="numOfRows">
-              <option>20</option>
-              <option selected>50</option>
-              <option>100</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="actions">
-          <button id="searchBtn" type="button">검색</button>
-          <button id="clearBtn" type="button" class="ghost">초기화</button>
+        <div class="mini-logo">
+          <span>APT</span>
+          <strong>아파트관리 통합검색</strong>
         </div>
       </section>
 
-      <section class="analysis-grid">
-        <div class="panel analysis-panel">
-          <div class="panel-title">
-            <h2>지역별 구분</h2>
-            <span id="regionSummary">-</span>
-          </div>
-          <div id="regionChart" class="bars"></div>
-        </div>
-        <div class="panel analysis-panel">
-          <div class="panel-title">
-            <h2>입찰종류/방법</h2>
-            <span id="methodSummary">-</span>
-          </div>
-          <div id="methodChart" class="bars"></div>
-        </div>
-      </section>
-
-      <section class="panel amount-panel">
-        <div class="panel-title">
-          <h2>낙찰금액 분석</h2>
-          <span id="amountSummary">입찰결과에서 표시됩니다.</span>
-        </div>
-        <div class="amount-stats">
-          <div>
-            <span>평균 낙찰금액</span>
-            <strong id="avgAmount">-</strong>
-          </div>
-          <div>
-            <span>최저 낙찰금액</span>
-            <strong id="minAmount">-</strong>
-          </div>
-          <div>
-            <span>최고 낙찰금액</span>
-            <strong id="maxAmount">-</strong>
-          </div>
-          <div>
-            <span>금액 확인 건수</span>
-            <strong id="amountCount">-</strong>
-          </div>
-        </div>
-        <div class="trend-wrap">
-          <h3>월별 낙찰금액 추이</h3>
-          <div id="amountTrend" class="bars"></div>
-        </div>
-      </section>
-
-      <section class="panel results-panel">
-        <div class="table-head">
-          <div>
-            <h2>입찰 목록</h2>
-            <p id="statusText">검색 조건을 입력하세요.</p>
-          </div>
-          <button id="exportBtn" type="button" class="ghost">CSV 내보내기</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>공고명</th>
-                <th>단지명</th>
-                <th>세대수</th>
-                <th>지역</th>
-                <th>입찰종류</th>
-                <th>입찰방법</th>
-                <th>낙찰금액</th>
-                <th>공고일</th>
-                <th>마감일</th>
-                <th>공고문</th>
-              </tr>
-            </thead>
-            <tbody id="resultRows"></tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <button id="prevPageBtn" type="button" class="ghost">이전</button>
-          <span id="pageInfo">1 / 1</span>
-          <button id="nextPageBtn" type="button" class="ghost">다음</button>
-        </div>
-      </section>
-
-      <footer class="footer">기획·제작: 관리사무소장 김상면</footer>
+      <footer class="footer portal-footer">기획·제작: 관리사무소장 김상면</footer>
     </main>
-
-    <script src="./app.js"></script>
   </body>
 </html>

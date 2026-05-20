@@ -530,7 +530,11 @@ function handleConfig(res) {
 }
 
 function serveStatic(req, res, parsedUrl) {
-  const safePath = parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname;
+  const routes = {
+    "/": "/index.html",
+    "/kapt": "/kapt.html"
+  };
+  const safePath = routes[parsedUrl.pathname] || parsedUrl.pathname;
   const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
   if (!filePath.startsWith(PUBLIC_DIR)) {
     send(res, 403, "Forbidden", "text/plain; charset=utf-8");
