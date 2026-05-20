@@ -450,61 +450,62 @@ td a {
 
 .brand-mark {
   position: relative;
-  width: 86px;
-  height: 86px;
-  flex: 0 0 86px;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 22px;
   background: #fff;
+  box-shadow: 0 14px 34px rgba(30, 36, 40, 0.08);
 }
 
 .mark-roof {
   position: absolute;
-  left: 20px;
-  top: 16px;
-  width: 46px;
-  height: 18px;
-  border-top: 5px solid var(--accent);
-  border-left: 5px solid var(--accent);
+  left: 27px;
+  top: 20px;
+  width: 58px;
+  height: 23px;
+  border-top: 7px solid var(--accent);
+  border-left: 7px solid var(--accent);
   transform: rotate(45deg);
 }
 
 .mark-tower {
   position: absolute;
-  bottom: 17px;
-  width: 18px;
-  height: 34px;
-  border-radius: 4px 4px 0 0;
+  bottom: 22px;
+  width: 24px;
+  height: 44px;
+  border-radius: 6px 6px 0 0;
   background: var(--accent);
 }
 
 .mark-left {
-  left: 24px;
+  left: 31px;
 }
 
 .mark-right {
-  left: 45px;
-  height: 45px;
+  left: 58px;
+  height: 58px;
   background: #1e2428;
 }
 
 .mark-search {
   position: absolute;
-  right: 14px;
-  bottom: 13px;
-  width: 25px;
-  height: 25px;
-  border: 4px solid var(--accent-2);
+  right: 16px;
+  bottom: 16px;
+  width: 32px;
+  height: 32px;
+  border: 5px solid var(--accent-2);
   border-radius: 50%;
 }
 
 .mark-search::after {
   content: "";
   position: absolute;
-  right: -9px;
-  bottom: -6px;
-  width: 14px;
-  height: 4px;
+  right: -11px;
+  bottom: -7px;
+  width: 18px;
+  height: 5px;
   border-radius: 999px;
   background: var(--accent-2);
   transform: rotate(45deg);
@@ -538,6 +539,86 @@ td a {
   background: #fff;
   text-decoration: none;
   transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.visual-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 78px;
+  border-radius: 8px;
+  padding: 13px;
+  border: 1px solid var(--line);
+}
+
+.visual-logo b,
+.visual-logo em {
+  display: block;
+  font-style: normal;
+}
+
+.visual-logo b {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.visual-logo em {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.visual-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 900;
+}
+
+.kapt-visual {
+  background: #f2faf8;
+  border-color: rgba(17, 107, 95, 0.28);
+}
+
+.kapt-visual .visual-icon {
+  background: var(--accent);
+}
+
+.kapt-visual .visual-icon::before {
+  content: "";
+  width: 19px;
+  height: 19px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+}
+
+.kapt-visual .visual-icon::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  bottom: 12px;
+  width: 14px;
+  height: 4px;
+  border-radius: 999px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+
+.case-visual {
+  background: #fbf7ef;
+  border-color: #d6c9b8;
+}
+
+.case-visual .visual-icon {
+  background: #3f3427;
+  font-size: 22px;
 }
 
 .menu-card:hover {
