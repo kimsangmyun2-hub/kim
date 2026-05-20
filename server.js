@@ -2,9 +2,12 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const { TextDecoder } = require("util");
 
 const PORT = Number(process.env.PORT || 3100);
 const PUBLIC_DIR = path.join(__dirname, "public");
+const DATA_DIR = process.env.KAPT_DATA_DIR || path.join(__dirname, "data");
+const APARTMENT_DATA_FILE = process.env.KAPT_APARTMENT_DATA_FILE || "";
 const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS || 15 * 60 * 1000);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 60);
@@ -52,6 +55,7 @@ const contentTypes = {
 const responseCache = new Map();
 const aptInfoCache = new Map();
 const rateLimit = new Map();
+const apartmentData = loadApartmentData();
 
 function readLocalServiceKey() {
   const configPath = path.join(__dirname, "config.local.json");
@@ -209,6 +213,138 @@ function setCached(key, value) {
   }
 }
 
+function readTextFile(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  const utf8 = buffer.toString("utf8");
+  if (!utf8.includes("�")) return utf8;
+  try {
+    return new TextDecoder("euc-kr").decode(buffer);
+  } catch {
+    return utf8;
+  }
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let quoted = false;
+  const source = text.replace(/^\uFEFF/, "");
+
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    const next = source[i + 1];
+    if (char === '"' && quoted && next === '"') {
+      value += '"';
+      i += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(value.trim());
+      value = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(value.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      value = "";
+    } else {
+      value += char;
+    }
+  }
+
+  row.push(value.trim());
+  if (row.some(Boolean)) rows.push(row);
+  if (!rows.length) return [];
+
+  const headers = rows[0].map((header) => header.trim());
+  return rows.slice(1).map((cells) => {
+    const item = {};
+    headers.forEach((header, index) => {
+      item[header] = cells[index] || "";
+    });
+    return item;
+  });
+}
+
+function firstValue(item, keys) {
+  for (const key of keys) {
+    if (item && item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== "") {
+      return String(item[key]).trim();
+    }
+  }
+  return "";
+}
+
+function normalizeApartmentName(value) {
+  return String(value || "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeApartmentRecord(item) {
+  const aptCode = firstValue(item, ["aptCode", "kaptCode", "단지코드", "K-apt단지코드", "KAPT코드", "공동주택코드"]);
+  const name = firstValue(item, ["aptName", "kaptName", "apartment", "단지명", "공동주택명", "아파트명"]);
+  const households = firstValue(item, ["households", "kaptdaCnt", "kaptDaCnt", "hshldCo", "hshldCnt", "세대수", "총세대수"]);
+  const area = firstValue(item, ["bidArea", "sidoCode", "시도코드", "지역코드", "법정동시도코드"]);
+  const address = firstValue(item, ["address", "도로명주소", "주소", "법정동주소"]);
+  return {
+    aptCode,
+    name,
+    households: households.replace(/[^0-9]/g, ""),
+    area,
+    address,
+    raw: item
+  };
+}
+
+function loadApartmentData() {
+  const result = {
+    loaded: false,
+    source: "",
+    count: 0,
+    byCode: new Map(),
+    byName: new Map()
+  };
+  const candidates = [
+    APARTMENT_DATA_FILE,
+    path.join(DATA_DIR, "apartments.json"),
+    path.join(DATA_DIR, "apartments.csv")
+  ].filter(Boolean);
+  const filePath = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!filePath) return result;
+
+  try {
+    const text = readTextFile(filePath);
+    const rows = filePath.endsWith(".json") ? JSON.parse(text) : parseCsv(text);
+    const items = Array.isArray(rows) ? rows : rows.items || rows.apartments || [];
+    for (const item of items) {
+      const record = normalizeApartmentRecord(item);
+      if (!record.aptCode && !record.name) continue;
+      if (record.aptCode) result.byCode.set(record.aptCode, record);
+      const nameKey = normalizeApartmentName(record.name);
+      if (nameKey) result.byName.set(nameKey, record);
+      result.count += 1;
+    }
+    result.loaded = result.count > 0;
+    result.source = path.basename(filePath);
+  } catch (error) {
+    result.error = error.message;
+  }
+  return result;
+}
+
+function findApartmentRecord(item) {
+  const code = String(item?.aptCode || item?.kaptCode || "").trim();
+  if (code && apartmentData.byCode.has(code)) return apartmentData.byCode.get(code);
+
+  const nameKey = normalizeApartmentName(item?.bidKaptname || item?.bidKaptName || item?.hsmpNm || item?.kaptName);
+  if (nameKey && apartmentData.byName.has(nameKey)) return apartmentData.byName.get(nameKey);
+  return null;
+}
+
 function findHouseholds(item) {
   const candidates = [
     "kaptdaCnt",
@@ -261,7 +397,14 @@ async function fetchAptInfo(aptCode, serviceKey) {
 }
 
 async function enrichItemsWithAptInfo(items, serviceKey) {
-  const uniqueCodes = [...new Set(items.map((item) => item.aptCode).filter(Boolean))].slice(0, 50);
+  const uniqueCodes = [
+    ...new Set(
+      items
+        .filter((item) => !findApartmentRecord(item)?.households)
+        .map((item) => item.aptCode)
+        .filter(Boolean)
+    )
+  ].slice(0, 50);
   await Promise.all(
     uniqueCodes.map(async (aptCode) => {
       try {
@@ -274,17 +417,21 @@ async function enrichItemsWithAptInfo(items, serviceKey) {
   );
 
   return items.map((item) => {
+    const apartmentRecord = findApartmentRecord(item);
     const info = aptInfoCache.get(item.aptCode);
     const textHouseholds = extractHouseholdsFromText(item.bidContent);
+    const dataHouseholds = apartmentRecord?.households || "";
     if (!info) {
       return {
         ...item,
-        households: findHouseholds(item) || textHouseholds || ""
+        households: findHouseholds(item) || dataHouseholds || textHouseholds || "",
+        apartmentData: apartmentRecord || undefined
       };
     }
     return {
       ...item,
-      households: findHouseholds(item) || info.households || textHouseholds || "",
+      households: findHouseholds(item) || dataHouseholds || info.households || textHouseholds || "",
+      apartmentData: apartmentRecord || undefined,
       aptBasicInfo: info.raw || undefined
     };
   });
@@ -359,7 +506,13 @@ function handleConfig(res) {
     JSON.stringify({
       hasServiceKey: Boolean(SERVICE_KEY),
       cacheMinutes: Math.round(CACHE_TTL_MS / 60000),
-      rateLimitPerMinute: RATE_LIMIT_MAX
+      rateLimitPerMinute: RATE_LIMIT_MAX,
+      apartmentData: {
+        loaded: apartmentData.loaded,
+        source: apartmentData.source,
+        count: apartmentData.count,
+        error: apartmentData.error || ""
+      }
     })
   );
 }
