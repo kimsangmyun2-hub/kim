@@ -246,7 +246,8 @@ async function fetchAptInfo(aptCode, serviceKey) {
     resultCode: parsed.resultCode,
     resultMsg: parsed.resultMsg,
     households: findHouseholds(parsed.items?.[0]),
-    raw: parsed.items?.[0] || null
+    raw: parsed.items?.[0] || null,
+    rawSnippet: apiResponse.raw.slice(0, 1000)
   };
   if (apiResponse.status === 200) {
     setCached(`apt:${aptCode}`, info);
