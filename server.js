@@ -17,7 +17,7 @@ const SERVICE_KEY =
 
 const NOTICE_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferServiceV2";
 const RESULT_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
-const BASIC_INFO_SERVICE = "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4";
+const BASIC_INFO_SERVICE = "http://apis.data.go.kr/1613000/AptBasisInfoServiceV4";
 
 const noticeEndpoints = {
   keyword: { path: "getBidPblAncNmSearchV2", params: ["bidTitle", "searchYear"] },
