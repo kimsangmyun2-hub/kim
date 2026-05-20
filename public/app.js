@@ -102,6 +102,21 @@ function renderBars(id, entries, mapName) {
     }).join("") || `<p class="empty compact">표시할 데이터가 없습니다.</p>`;
 }
 
+function renderMixedBars(id, entries) {
+  const max = entries[0]?.count || 1;
+  $(id).innerHTML =
+    entries.slice(0, 8).map((entry) => {
+      const width = Math.max(4, Math.round((entry.count / max) * 100));
+      return `
+        <div class="bar-row">
+          <span title="${escapeHtml(entry.label)}">${escapeHtml(entry.label)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+          <strong>${entry.count.toLocaleString()}</strong>
+        </div>
+      `;
+    }).join("") || `<p class="empty compact">표시할 데이터가 없습니다.</p>`;
+}
+
 function renderTrendBars(id, entries) {
   const max = Math.max(...entries.map((entry) => entry.average), 1);
   $(id).innerHTML =
@@ -119,9 +134,12 @@ function renderTrendBars(id, entries) {
 
 function renderStats(rows) {
   const regionEntries = countBy(rows, "area");
-  const methodEntries = [...countBy(rows, "kind"), ...countBy(rows, "method")].slice(0, 8);
+  const methodEntries = [
+    ...countBy(rows, "kind").map(([name, count]) => ({ label: `종류: ${label("codeKind", name)}`, count })),
+    ...countBy(rows, "method").map(([name, count]) => ({ label: `방법: ${label("codeWay", name)}`, count }))
+  ].sort((a, b) => b.count - a.count);
   renderBars("regionChart", regionEntries, "bidArea");
-  renderBars("methodChart", methodEntries, "codeKind");
+  renderMixedBars("methodChart", methodEntries);
   $("regionSummary").textContent = rows.length ? `${regionEntries.length.toLocaleString()}개 지역` : "-";
   $("methodSummary").textContent = rows.length ? `${methodEntries.length.toLocaleString()}개 항목` : "-";
   renderAmountStats(rows);
