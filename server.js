@@ -9,9 +9,11 @@ const CACHE_TTL_MS = Number(process.env.CACHE_TTL_MS || 15 * 60 * 1000);
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 60);
 const SERVICE_KEY =
-  process.env.KAPT_SERVICE_KEY ||
-  process.env.DATA_GO_KR_SERVICE_KEY ||
-  readLocalServiceKey();
+  String(
+    process.env.KAPT_SERVICE_KEY ||
+      process.env.DATA_GO_KR_SERVICE_KEY ||
+      readLocalServiceKey()
+  ).trim();
 
 const NOTICE_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferService1";
 const RESULT_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
@@ -232,7 +234,9 @@ async function handleApi(req, res, parsedUrl) {
     ...parsed
   };
 
-  setCached(key, payload);
+  if (apiResponse.status === 200) {
+    setCached(key, payload);
+  }
   send(res, 200, JSON.stringify(payload));
 }
 

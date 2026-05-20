@@ -141,7 +141,9 @@ async function search() {
     renderStats(currentRows);
     renderRows(currentRows);
     const cacheText = data.cached ? "저장된 검색 결과를 사용했습니다." : "K-apt API에서 새로 조회했습니다.";
-    setStatus(`${data.endpoint} 기준 ${currentRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()} · ${cacheText}`);
+    const apiStatus = data.status && data.status !== 200 ? ` · API 상태: ${data.status}` : "";
+    const apiMessage = data.rawSnippet ? ` · 원문 오류: ${data.rawSnippet.trim()}` : "";
+    setStatus(`${data.endpoint} 기준 ${currentRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()} · ${cacheText}${apiStatus}${apiMessage}`);
   } catch (error) {
     setStatus(error.message);
   } finally {
