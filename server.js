@@ -352,6 +352,16 @@ function handleConfig(res) {
   );
 }
 
+async function handleAptDebug(res, parsedUrl) {
+  const aptCode = parsedUrl.searchParams.get("aptCode");
+  if (!aptCode) {
+    send(res, 400, JSON.stringify({ error: "aptCode is required." }));
+    return;
+  }
+  const info = await fetchAptInfo(aptCode, SERVICE_KEY);
+  send(res, 200, JSON.stringify(info));
+}
+
 function serveStatic(req, res, parsedUrl) {
   const safePath = parsedUrl.pathname === "/" ? "/index.html" : parsedUrl.pathname;
   const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
@@ -377,6 +387,10 @@ const server = http.createServer(async (req, res) => {
     }
     if (parsedUrl.pathname === "/api/config") {
       handleConfig(res);
+      return;
+    }
+    if (parsedUrl.pathname === "/api/apt-debug") {
+      await handleAptDebug(res, parsedUrl);
       return;
     }
     serveStatic(req, res, parsedUrl);
