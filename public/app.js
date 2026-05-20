@@ -28,7 +28,7 @@ function normalizeItem(item) {
   return {
     title: item.bidTitle || item.bidPblancNm || item.pblancNm || "",
     apartment: item.bidKaptname || item.bidKaptName || item.hsmpNm || item.kaptName || "",
-    households: item.kaptdaCnt || item.hshldCo || item.householdCount || item.hshldCnt || item.hoCnt || item.households || "",
+    households: item.households || item.kaptdaCnt || item.kaptDaCnt || item.hshldCo || item.householdCount || item.hshldCnt || item.hoCnt || "",
     area: item.bidArea || item.legaldongSidoCd || "",
     kind: item.codeKind || item.bidKnd || "",
     method: item.codeWay || item.bidMethod || "",
@@ -154,7 +154,7 @@ async function search() {
     const apiMessage = data.rawSnippet ? ` · 원문 오류: ${data.rawSnippet.trim()}` : "";
     const householdNote = currentRows.some((row) => row.households)
       ? ""
-      : " · 세대수는 입찰 API에 포함되지 않아 별도 단지정보 API 연동이 필요합니다.";
+      : " · 세대수 정보를 찾지 못한 단지가 있습니다.";
     const filterText = $("regionFilter").value ? ` · 지역 필터 적용: ${label("bidArea", $("regionFilter").value)} ${currentRows.length.toLocaleString()}건` : "";
     setStatus(`${data.endpoint} 기준 ${allRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()}${filterText} · ${cacheText}${apiStatus}${apiMessage}${householdNote}`);
   } catch (error) {

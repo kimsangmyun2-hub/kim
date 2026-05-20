@@ -17,6 +17,7 @@ const SERVICE_KEY =
 
 const NOTICE_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferServiceV2";
 const RESULT_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
+const BASIC_INFO_SERVICE = "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4";
 
 const noticeEndpoints = {
   keyword: { path: "getBidPblAncNmSearchV2", params: ["bidTitle", "searchYear"] },
@@ -49,6 +50,7 @@ const contentTypes = {
 };
 
 const responseCache = new Map();
+const aptInfoCache = new Map();
 const rateLimit = new Map();
 
 function readLocalServiceKey() {
@@ -207,6 +209,75 @@ function setCached(key, value) {
   }
 }
 
+function findHouseholds(item) {
+  const candidates = [
+    "kaptdaCnt",
+    "kaptDaCnt",
+    "kaptDongCnt",
+    "hshldCo",
+    "hshldCnt",
+    "householdCount",
+    "households"
+  ];
+  for (const key of candidates) {
+    if (item && item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== "") {
+      return String(item[key]).trim();
+    }
+  }
+  return "";
+}
+
+async function fetchAptInfo(aptCode, serviceKey) {
+  if (!aptCode) return null;
+  const cached = getCached(`apt:${aptCode}`);
+  if (cached) return cached;
+
+  const url = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusDtlInfoV4" }, {
+    serviceKey,
+    kaptCode: aptCode,
+    aptCode,
+    pageNo: 1,
+    numOfRows: 1
+  });
+  const apiResponse = await requestUrl(url);
+  const parsed = parseApiResponse(apiResponse.raw);
+  const info = {
+    status: apiResponse.status,
+    resultCode: parsed.resultCode,
+    resultMsg: parsed.resultMsg,
+    households: findHouseholds(parsed.items?.[0]),
+    raw: parsed.items?.[0] || null
+  };
+  if (apiResponse.status === 200) {
+    setCached(`apt:${aptCode}`, info);
+  }
+  return info;
+}
+
+async function enrichItemsWithAptInfo(items, serviceKey) {
+  const uniqueCodes = [...new Set(items.map((item) => item.aptCode).filter(Boolean))].slice(0, 50);
+  await Promise.all(
+    uniqueCodes.map(async (aptCode) => {
+      try {
+        const info = await fetchAptInfo(aptCode, serviceKey);
+        if (info) aptInfoCache.set(aptCode, info);
+      } catch {
+        aptInfoCache.set(aptCode, { households: "" });
+      }
+    })
+  );
+
+  return items.map((item) => {
+    const info = aptInfoCache.get(item.aptCode);
+    if (!info) return item;
+    return {
+      ...item,
+      households: findHouseholds(item) || info.households || "",
+      aptBasicInfo: info.raw || undefined
+    };
+  });
+}
+
 async function handleApi(req, res, parsedUrl) {
   if (isRateLimited(req)) {
     send(res, 429, JSON.stringify({ error: "Too many search requests. Please try again in one minute." }));
@@ -250,6 +321,7 @@ async function handleApi(req, res, parsedUrl) {
   const apiUrl = buildApiUrl(service, endpoint, query);
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
+  const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
   const payload = {
     dataset,
     mode,
@@ -258,7 +330,8 @@ async function handleApi(req, res, parsedUrl) {
     status: apiResponse.status,
     cached: false,
     rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
-    ...parsed
+    ...parsed,
+    items: enrichedItems
   };
 
   if (apiResponse.status === 200) {
