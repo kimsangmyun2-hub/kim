@@ -13,8 +13,8 @@ const SERVICE_KEY =
   process.env.DATA_GO_KR_SERVICE_KEY ||
   readLocalServiceKey();
 
-const NOTICE_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferService1";
-const RESULT_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
+const NOTICE_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferService1";
+const RESULT_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
 
 const noticeEndpoints = {
   keyword: { path: "getBidPblAncNmSearch", params: ["bidTitle", "searchYear"] },
@@ -123,7 +123,8 @@ function buildApiUrl(service, endpoint, query) {
 
 function requestUrl(url) {
   return new Promise((resolve, reject) => {
-    https
+    const client = url.protocol === "http:" ? http : https;
+    client
       .get(url, (apiRes) => {
         let raw = "";
         apiRes.setEncoding("utf8");
