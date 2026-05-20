@@ -374,23 +374,35 @@ async function fetchAptInfo(aptCode, serviceKey) {
   const cached = getCached(`apt:${aptCode}`);
   if (cached) return cached;
 
-  const url = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusDtlInfoV4" }, {
+  const baseQuery = {
     serviceKey,
     kaptCode: aptCode,
     aptCode,
     pageNo: 1,
     numOfRows: 1
-  });
-  const apiResponse = await requestUrl(url);
-  const parsed = parseApiResponse(apiResponse.raw);
-  const info = {
-    status: apiResponse.status,
-    resultCode: parsed.resultCode,
-    resultMsg: parsed.resultMsg,
-    households: findHouseholds(parsed.items?.[0]),
-    raw: parsed.items?.[0] || null
   };
-  if (apiResponse.status === 200) {
+  const basicUrl = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusBassInfoV4" }, baseQuery);
+  const detailUrl = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusDtlInfoV4" }, baseQuery);
+  const [basicResponse, detailResponse] = await Promise.all([
+    requestUrl(basicUrl),
+    requestUrl(detailUrl)
+  ]);
+  const basicParsed = parseApiResponse(basicResponse.raw);
+  const detailParsed = parseApiResponse(detailResponse.raw);
+  const basicItem = basicParsed.items?.[0] || null;
+  const detailItem = detailParsed.items?.[0] || null;
+  const mergedItem = {
+    ...(detailItem || {}),
+    ...(basicItem || {})
+  };
+  const info = {
+    status: basicResponse.status === 200 ? basicResponse.status : detailResponse.status,
+    resultCode: basicParsed.resultCode || detailParsed.resultCode,
+    resultMsg: basicParsed.resultMsg || detailParsed.resultMsg,
+    households: findHouseholds(mergedItem),
+    raw: Object.keys(mergedItem).length ? mergedItem : null
+  };
+  if (basicResponse.status === 200 || detailResponse.status === 200) {
     setCached(`apt:${aptCode}`, info);
   }
   return info;
