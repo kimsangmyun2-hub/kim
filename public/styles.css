@@ -785,6 +785,42 @@ td a {
   padding-top: 28px;
 }
 
+.share-body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.share-card {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.share-card img {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+}
+
+.share-card a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+}
+
 @media (max-width: 900px) {
   .topbar,
   .table-head {

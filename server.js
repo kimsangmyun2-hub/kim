@@ -536,7 +536,9 @@ function handleConfig(res) {
 function serveStatic(req, res, parsedUrl) {
   const routes = {
     "/": "/index.html",
-    "/kapt": "/kapt.html"
+    "/kapt": "/kapt.html",
+    "/share": "/share.html",
+    "/kapt-share": "/kapt-share.html"
   };
   const safePath = routes[parsedUrl.pathname] || parsedUrl.pathname;
   const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
