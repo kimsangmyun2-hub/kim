@@ -35,6 +35,7 @@ function normalizeItem(item) {
     state: item.bidState || item.bidSttus || "",
     noticeDate: item.bidRegDate || item.bidRegdate || item.pblancDe || item.bidPblancDe || "",
     closeDate: item.bidDeadline || item.bidClosDe || "",
+    amount: parseAmount(item.amount || item.bidAmount || item.sucBidAmount || item.resultAmount || item.bidResultAmount),
     fileSeq: item.bidFileSeq || "",
     content: item.bidContent || "",
     raw: item
@@ -65,6 +66,25 @@ function countBy(rows, key) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+function parseAmount(value) {
+  const cleaned = String(value || "").replace(/[^0-9.-]/g, "");
+  const amount = Number(cleaned);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+}
+
+function formatWon(value) {
+  if (!value) return "-";
+  if (value >= 100000000) {
+    const eok = value / 100000000;
+    return `${eok.toLocaleString(undefined, { maximumFractionDigits: 1 })}억원`;
+  }
+  if (value >= 10000) {
+    const man = value / 10000;
+    return `${Math.round(man).toLocaleString()}만원`;
+  }
+  return `${Math.round(value).toLocaleString()}원`;
+}
+
 function renderBars(id, entries, mapName) {
   const max = entries[0]?.[1] || 1;
   $(id).innerHTML =
@@ -80,6 +100,21 @@ function renderBars(id, entries, mapName) {
     }).join("") || `<p class="empty compact">표시할 데이터가 없습니다.</p>`;
 }
 
+function renderTrendBars(id, entries) {
+  const max = Math.max(...entries.map((entry) => entry.average), 1);
+  $(id).innerHTML =
+    entries.map((entry) => {
+      const width = Math.max(4, Math.round((entry.average / max) * 100));
+      return `
+        <div class="bar-row trend-row">
+          <span title="${escapeHtml(entry.month)}">${escapeHtml(entry.month)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+          <strong>${escapeHtml(formatWon(entry.average))}</strong>
+        </div>
+      `;
+    }).join("") || `<p class="empty compact">낙찰금액 데이터가 없습니다.</p>`;
+}
+
 function renderStats(rows) {
   const regionEntries = countBy(rows, "area");
   const methodEntries = [...countBy(rows, "kind"), ...countBy(rows, "method")].slice(0, 8);
@@ -87,6 +122,41 @@ function renderStats(rows) {
   renderBars("methodChart", methodEntries, "codeKind");
   $("regionSummary").textContent = rows.length ? `${regionEntries.length.toLocaleString()}개 지역` : "-";
   $("methodSummary").textContent = rows.length ? `${methodEntries.length.toLocaleString()}개 항목` : "-";
+  renderAmountStats(rows);
+}
+
+function renderAmountStats(rows) {
+  const amounts = rows.map((row) => row.amount).filter(Boolean);
+  const count = amounts.length;
+  const sum = amounts.reduce((total, value) => total + value, 0);
+  const average = count ? sum / count : 0;
+  const min = count ? Math.min(...amounts) : 0;
+  const max = count ? Math.max(...amounts) : 0;
+
+  $("avgAmount").textContent = formatWon(average);
+  $("minAmount").textContent = formatWon(min);
+  $("maxAmount").textContent = formatWon(max);
+  $("amountCount").textContent = count ? `${count.toLocaleString()}건` : "-";
+  $("amountSummary").textContent = count
+    ? `낙찰금액 ${count.toLocaleString()}건 기준`
+    : "입찰결과에서 표시됩니다.";
+
+  const months = new Map();
+  for (const row of rows) {
+    if (!row.amount) continue;
+    const month = String(row.noticeDate || row.closeDate || "").slice(0, 7) || "미분류";
+    const current = months.get(month) || { sum: 0, count: 0 };
+    current.sum += row.amount;
+    current.count += 1;
+    months.set(month, current);
+  }
+  const entries = [...months.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, value]) => ({
+      month,
+      average: value.sum / value.count
+    }));
+  renderTrendBars("amountTrend", entries);
 }
 
 function applyRegionFilter() {
@@ -112,12 +182,13 @@ function renderRows(rows) {
           <td>${escapeHtml(label("bidArea", row.area))}</td>
           <td>${escapeHtml(label("codeKind", row.kind))}</td>
           <td>${escapeHtml(label("codeWay", row.method))}</td>
+          <td>${escapeHtml(formatWon(row.amount))}</td>
           <td>${escapeHtml(row.noticeDate || "-")}</td>
           <td>${escapeHtml(row.closeDate || "-")}</td>
           <td>${fileUrl ? `<a href="${fileUrl}" target="_blank" rel="noreferrer">열기</a>` : "-"}</td>
         </tr>
       `;
-    }).join("") || `<tr><td colspan="9" class="empty">검색 결과가 없습니다.</td></tr>`;
+    }).join("") || `<tr><td colspan="10" class="empty">검색 결과가 없습니다.</td></tr>`;
 }
 
 function escapeHtml(value) {
@@ -177,9 +248,9 @@ function exportCsv() {
     setStatus("내보낼 검색 결과가 없습니다.");
     return;
   }
-  const header = ["공고명", "단지명", "세대수", "지역", "입찰종류", "입찰방법", "공고일", "마감일"];
+  const header = ["공고명", "단지명", "세대수", "지역", "입찰종류", "입찰방법", "낙찰금액", "공고일", "마감일"];
   const lines = currentRows.map((row) =>
-    [row.title, row.apartment, row.households, label("bidArea", row.area), label("codeKind", row.kind), label("codeWay", row.method), row.noticeDate, row.closeDate]
+    [row.title, row.apartment, row.households, label("bidArea", row.area), label("codeKind", row.kind), label("codeWay", row.method), row.amount || "", row.noticeDate, row.closeDate]
       .map((value) => `"${String(value || "").replace(/"/g, '""')}"`)
       .join(",")
   );

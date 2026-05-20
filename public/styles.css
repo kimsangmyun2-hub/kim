@@ -177,6 +177,10 @@ button.ghost {
   font-size: 13px;
 }
 
+.trend-row {
+  grid-template-columns: 90px 1fr 96px;
+}
+
 .bar-row span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -197,6 +201,42 @@ button.ghost {
 
 .bar-row:nth-child(even) .bar-fill {
   background: var(--accent-2);
+}
+
+.amount-panel {
+  margin-bottom: 14px;
+}
+
+.amount-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.amount-stats div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfcfb;
+}
+
+.amount-stats span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.amount-stats strong {
+  display: block;
+  font-size: 18px;
+}
+
+.trend-wrap h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
 }
 
 .table-head {
@@ -268,7 +308,8 @@ td a {
   }
 
   .grid,
-  .analysis-grid {
+  .analysis-grid,
+  .amount-stats {
     grid-template-columns: 1fr;
   }
 }
