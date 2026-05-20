@@ -626,9 +626,9 @@ td a {
   align-items: center;
   justify-content: center;
   min-height: 116px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
 }
 
@@ -640,8 +640,7 @@ td a {
 }
 
 .case-image-logo {
-  background: #fff;
-  border-color: #cfd6da;
+  background: transparent;
 }
 
 .menu-card:hover {
