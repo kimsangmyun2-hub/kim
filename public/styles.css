@@ -599,16 +599,16 @@ td a {
 
 .detective-logo {
   position: relative;
-  width: 58px;
+  width: 64px;
   height: 58px;
-  flex: 0 0 58px;
+  flex: 0 0 64px;
 }
 
 .detective-hat {
   position: absolute;
-  left: 8px;
-  top: 4px;
-  width: 42px;
+  left: 9px;
+  top: 3px;
+  width: 40px;
   height: 13px;
   border-radius: 13px 13px 5px 5px;
   background: #1e2428;
@@ -627,10 +627,10 @@ td a {
 
 .detective-face {
   position: absolute;
-  left: 10px;
+  left: 9px;
   top: 16px;
-  width: 38px;
-  height: 36px;
+  width: 40px;
+  height: 37px;
   border: 3px solid var(--accent);
   border-radius: 50%;
   background: #fff;
@@ -638,27 +638,20 @@ td a {
 
 .detective-eye {
   position: absolute;
+  left: 14px;
   top: 11px;
-  width: 11px;
-  height: 11px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: #1e2428;
-  box-shadow: inset 3px -2px 0 rgba(255, 255, 255, 0.75);
-}
-
-.detective-eye.left {
-  left: 7px;
-}
-
-.detective-eye.right {
-  right: 7px;
+  box-shadow: inset 5px -4px 0 rgba(255, 255, 255, 0.78);
 }
 
 .detective-nose {
   position: absolute;
-  left: 16px;
-  top: 22px;
-  width: 7px;
+  left: 17px;
+  top: 28px;
+  width: 8px;
   height: 4px;
   border-radius: 999px;
   background: var(--accent-2);
@@ -666,10 +659,10 @@ td a {
 
 .detective-glass {
   position: absolute;
-  right: -3px;
-  bottom: 2px;
-  width: 30px;
-  height: 30px;
+  left: 20px;
+  top: 20px;
+  width: 34px;
+  height: 34px;
   border: 5px solid var(--accent-2);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
@@ -678,8 +671,8 @@ td a {
 .detective-glass::after {
   content: "";
   position: absolute;
-  right: -13px;
-  bottom: -8px;
+  right: -15px;
+  bottom: -9px;
   width: 18px;
   height: 5px;
   border-radius: 999px;
