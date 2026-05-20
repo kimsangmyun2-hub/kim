@@ -15,19 +15,19 @@ const SERVICE_KEY =
       readLocalServiceKey()
   ).trim();
 
-const NOTICE_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferService1";
-const RESULT_SERVICE = "http://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
+const NOTICE_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidPblAncInfoOfferServiceV2";
+const RESULT_SERVICE = "https://apis.data.go.kr/1613000/ApHusBidResultNoticeInfoOfferServiceV2";
 
 const noticeEndpoints = {
-  keyword: { path: "getBidPblAncNmSearch", params: ["bidTitle", "searchYear"] },
-  apartment: { path: "getHsmpNmSearch", params: ["bidKaptName", "searchYear"] },
-  region: { path: "getBidAreaSearch", params: ["bidArea", "searchYear"] },
-  method: { path: "getBidMethodSearch", params: ["codeWay", "searchYear"] },
-  kind: { path: "getBidKndSearch", params: ["codeKind", "searchYear"] },
-  status: { path: "getBidSttusSearch", params: ["bidState", "searchYear"] },
-  noticeDate: { path: "getPblAncDeSearch", params: ["bidRegdate", "searchYear"] },
-  closeDate: { path: "getBidClosDeSearch", params: ["bidDeadline", "searchYear"] },
-  aptCode: { path: "getHsmpCdSearch", params: ["aptCode", "searchYear"] }
+  keyword: { path: "getBidPblAncNmSearchV2", params: ["bidTitle", "searchYear"] },
+  apartment: { path: "getHsmpNmSearchV2", params: ["bidKaptName", "searchYear"] },
+  region: { path: "getBidAreaSearchV2", params: ["bidArea", "searchYear"] },
+  method: { path: "getBidMethodSearchV2", params: ["codeWay", "searchYear"] },
+  kind: { path: "getBidKndSearchV2", params: ["codeKind", "searchYear"] },
+  status: { path: "getBidSttusSearchV2", params: ["bidState", "searchYear"] },
+  noticeDate: { path: "getPblAncDeSearchV2", params: ["bidRegdate", "searchYear"] },
+  closeDate: { path: "getBidClosDeSearchV2", params: ["bidDeadline", "searchYear"] },
+  aptCode: { path: "getHsmpCdSearchV2", params: ["aptCode", "searchYear"] }
 };
 
 const resultEndpoints = {
@@ -109,6 +109,27 @@ function parseXml(xml) {
     numOfRows: Number(textOf(xml, "numOfRows") || items.length || 0),
     items
   };
+}
+
+function parseApiResponse(raw) {
+  try {
+    const json = JSON.parse(raw);
+    const response = json.response || json.Response || json;
+    const header = response.header || {};
+    const body = response.body || {};
+    const rawItems = body.items?.item || body.items || response.items?.item || response.items || [];
+    const items = Array.isArray(rawItems) ? rawItems : rawItems ? [rawItems] : [];
+    return {
+      resultCode: header.resultCode || response.resultCode || "",
+      resultMsg: header.resultMsg || response.resultMsg || "",
+      totalCount: Number(body.totalCount || response.totalCount || items.length || 0),
+      pageNo: Number(body.pageNo || response.pageNo || 1),
+      numOfRows: Number(body.numOfRows || response.numOfRows || items.length || 0),
+      items
+    };
+  } catch {
+    return parseXml(raw);
+  }
 }
 
 function buildApiUrl(service, endpoint, query) {
@@ -228,7 +249,7 @@ async function handleApi(req, res, parsedUrl) {
   const service = dataset === "result" ? RESULT_SERVICE : NOTICE_SERVICE;
   const apiUrl = buildApiUrl(service, endpoint, query);
   const apiResponse = await requestUrl(apiUrl);
-  const parsed = parseXml(apiResponse.raw);
+  const parsed = parseApiResponse(apiResponse.raw);
   const payload = {
     dataset,
     mode,
