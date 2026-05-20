@@ -626,10 +626,13 @@ td a {
   align-items: center;
   justify-content: center;
   min-height: 116px;
-  border: 0;
-  border-radius: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
   background: transparent;
   overflow: hidden;
+  outline: 0 !important;
+  box-shadow: none !important;
+  padding: 0;
 }
 
 .image-logo img {
@@ -640,7 +643,10 @@ td a {
 }
 
 .case-image-logo {
-  background: transparent;
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 
 .menu-card:hover {
