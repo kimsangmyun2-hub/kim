@@ -621,6 +621,29 @@ td a {
   font-size: 22px;
 }
 
+.image-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 116px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.image-logo img {
+  display: block;
+  width: 100%;
+  max-height: 112px;
+  object-fit: contain;
+}
+
+.case-image-logo {
+  background: #fff;
+  border-color: #cfd6da;
+}
+
 .menu-card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
