@@ -258,6 +258,30 @@ button.ghost {
   border-radius: 8px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.pagination button {
+  min-width: 74px;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.pagination span {
+  min-width: 86px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;

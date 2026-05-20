@@ -23,6 +23,8 @@ const modeConfig = {
 
 let allRows = [];
 let currentRows = [];
+let currentPage = 1;
+const pageSize = 10;
 
 function normalizeItem(item) {
   return {
@@ -162,11 +164,15 @@ function renderAmountStats(rows) {
 function applyRegionFilter() {
   const region = $("regionFilter").value;
   currentRows = region ? allRows.filter((row) => String(row.area) === region) : [...allRows];
+  currentPage = 1;
   renderStats(currentRows);
-  renderRows(currentRows);
+  renderRows();
+  renderPagination();
 }
 
-function renderRows(rows) {
+function renderRows() {
+  const start = (currentPage - 1) * pageSize;
+  const rows = currentRows.slice(start, start + pageSize);
   $("resultRows").innerHTML =
     rows.map((row) => {
       const fileUrl = row.fileSeq
@@ -189,6 +195,21 @@ function renderRows(rows) {
         </tr>
       `;
     }).join("") || `<tr><td colspan="10" class="empty">검색 결과가 없습니다.</td></tr>`;
+}
+
+function renderPagination() {
+  const totalPages = Math.max(1, Math.ceil(currentRows.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  $("pageInfo").textContent = `${currentPage.toLocaleString()} / ${totalPages.toLocaleString()}`;
+  $("prevPageBtn").disabled = currentPage <= 1;
+  $("nextPageBtn").disabled = currentPage >= totalPages;
+}
+
+function movePage(direction) {
+  const totalPages = Math.max(1, Math.ceil(currentRows.length / pageSize));
+  currentPage = Math.min(totalPages, Math.max(1, currentPage + direction));
+  renderRows();
+  renderPagination();
 }
 
 function escapeHtml(value) {
@@ -238,8 +259,10 @@ async function search() {
 function clearAll() {
   allRows = [];
   currentRows = [];
+  currentPage = 1;
   renderStats(currentRows);
-  renderRows(currentRows);
+  renderRows();
+  renderPagination();
   setStatus("초기화했습니다.");
 }
 
@@ -271,6 +294,8 @@ $("regionFilter").addEventListener("change", () => {
 $("searchBtn").addEventListener("click", search);
 $("clearBtn").addEventListener("click", clearAll);
 $("exportBtn").addEventListener("click", exportCsv);
+$("prevPageBtn").addEventListener("click", () => movePage(-1));
+$("nextPageBtn").addEventListener("click", () => movePage(1));
 
 updateMode();
 clearAll();
