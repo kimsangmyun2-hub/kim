@@ -15,13 +15,13 @@ const codeMaps = {
 const modeConfig = {
   keyword: { label: "검색어", param: "bidTitle", placeholder: "예: 승강기, CCTV, 방수" },
   apartment: { label: "아파트명", param: "bidKaptName", placeholder: "예: 동신2단지" },
-  region: { label: "지역", param: "bidArea", placeholder: "지역 선택" },
   method: { label: "입찰방법 코드", param: "codeWay", placeholder: "00 직접입찰, 01 전자입찰" },
   kind: { label: "입찰종류 코드", param: "codeKind", placeholder: "01 일반, 02 제한, 03 지명" },
   status: { label: "입찰상태 코드", param: "bidState", placeholder: "1 신규, 2 수정, 3 재공고" },
   aptCode: { label: "단지코드", param: "aptCode", placeholder: "K-apt 단지코드" }
 };
 
+let allRows = [];
 let currentRows = [];
 
 function normalizeItem(item) {
@@ -50,9 +50,6 @@ function updateMode() {
   const config = modeConfig[$("mode").value];
   $("valueLabel").textContent = config.label;
   $("searchValue").placeholder = config.placeholder;
-  const isRegion = $("mode").value === "region";
-  $("searchValue").hidden = isRegion;
-  $("regionValue").hidden = !isRegion;
 }
 
 function setStatus(message) {
@@ -90,6 +87,13 @@ function renderStats(rows) {
   $("statFiles").textContent = rows.filter((row) => row.fileSeq).length.toLocaleString();
   renderBars("regionChart", countBy(rows, "area"), "bidArea");
   renderBars("methodChart", [...countBy(rows, "kind"), ...countBy(rows, "method")].slice(0, 8), "codeKind");
+}
+
+function applyRegionFilter() {
+  const region = $("regionFilter").value;
+  currentRows = region ? allRows.filter((row) => String(row.area) === region) : [...allRows];
+  renderStats(currentRows);
+  renderRows(currentRows);
 }
 
 function renderRows(rows) {
@@ -134,7 +138,7 @@ async function search() {
     numOfRows: $("numOfRows").value,
     pageNo: "1"
   });
-  params.set(config.param, mode === "region" ? $("regionValue").value : $("searchValue").value.trim());
+  params.set(config.param, $("searchValue").value.trim());
 
   setStatus("K-apt API를 조회하고 있습니다.");
   $("searchBtn").disabled = true;
@@ -143,16 +147,16 @@ async function search() {
     const response = await fetch(`/api/kapt?${params}`);
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || "조회 중 오류가 발생했습니다.");
-    currentRows = (data.items || []).map(normalizeItem);
-    renderStats(currentRows);
-    renderRows(currentRows);
+    allRows = (data.items || []).map(normalizeItem);
+    applyRegionFilter();
     const cacheText = data.cached ? "저장된 검색 결과를 사용했습니다." : "K-apt API에서 새로 조회했습니다.";
     const apiStatus = data.status && data.status !== 200 ? ` · API 상태: ${data.status}` : "";
     const apiMessage = data.rawSnippet ? ` · 원문 오류: ${data.rawSnippet.trim()}` : "";
     const householdNote = currentRows.some((row) => row.households)
       ? ""
       : " · 세대수는 입찰 API에 포함되지 않아 별도 단지정보 API 연동이 필요합니다.";
-    setStatus(`${data.endpoint} 기준 ${currentRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()} · ${cacheText}${apiStatus}${apiMessage}${householdNote}`);
+    const filterText = $("regionFilter").value ? ` · 지역 필터 적용: ${label("bidArea", $("regionFilter").value)} ${currentRows.length.toLocaleString()}건` : "";
+    setStatus(`${data.endpoint} 기준 ${allRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()}${filterText} · ${cacheText}${apiStatus}${apiMessage}${householdNote}`);
   } catch (error) {
     setStatus(error.message);
   } finally {
@@ -161,18 +165,18 @@ async function search() {
 }
 
 function loadSample() {
-  currentRows = [
+  allRows = [
     { title: "승강기 로프 교체공사 업체 선정", apartment: "한빛마을 1단지", households: "812", area: "41", kind: "02", method: "01", noticeDate: "2026-03-04", closeDate: "2026-03-14", fileSeq: "" },
     { title: "CCTV 증설 및 교체공사", apartment: "푸른아파트", households: "498", area: "11", kind: "01", method: "01", noticeDate: "2026-02-20", closeDate: "2026-03-02", fileSeq: "" },
     { title: "옥상 방수공사 사업자 선정", apartment: "동신2단지", households: "660", area: "52", kind: "02", method: "00", noticeDate: "2026-01-12", closeDate: "2026-01-22", fileSeq: "" },
     { title: "소방시설 보수공사", apartment: "해오름마을", households: "1,024", area: "26", kind: "01", method: "01", noticeDate: "2026-04-08", closeDate: "2026-04-18", fileSeq: "" }
   ];
-  renderStats(currentRows);
-  renderRows(currentRows);
+  applyRegionFilter();
   setStatus("예시 데이터로 분석 화면을 표시했습니다. 실제 조회에는 서버 API 인증키 설정이 필요합니다.");
 }
 
 function clearAll() {
+  allRows = [];
   currentRows = [];
   renderStats(currentRows);
   renderRows(currentRows);
@@ -200,6 +204,10 @@ function exportCsv() {
 }
 
 $("mode").addEventListener("change", updateMode);
+$("regionFilter").addEventListener("change", () => {
+  applyRegionFilter();
+  setStatus($("regionFilter").value ? `${label("bidArea", $("regionFilter").value)} 지역 필터를 적용했습니다.` : "지역 필터를 해제했습니다.");
+});
 $("searchBtn").addEventListener("click", search);
 $("sampleBtn").addEventListener("click", loadSample);
 $("clearBtn").addEventListener("click", clearAll);
