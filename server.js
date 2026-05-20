@@ -228,6 +228,7 @@ async function handleApi(req, res, parsedUrl) {
     requestedUrl: apiUrl.toString().replace(encodeURIComponent(serviceKey), "SERVICE_KEY").replace(serviceKey, "SERVICE_KEY"),
     status: apiResponse.status,
     cached: false,
+    rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
     ...parsed
   };
 
