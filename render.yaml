@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kapt-search-app
+    env: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    envVars:
+      - key: KAPT_SERVICE_KEY
+        sync: false
+      - key: CACHE_TTL_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "60"

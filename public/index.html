@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>K-apt 입찰 검색</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">공동주택 입찰 분석 도구</p>
+          <h1>K-apt 입찰 검색</h1>
+          <p class="maker">기획·제작: 관리사무소장 김상면</p>
+        </div>
+        <div class="source-note">공공데이터 API를 서버에서 안전하게 조회합니다.</div>
+      </section>
+
+      <section class="panel controls">
+        <div class="grid">
+          <label class="field">
+            <span>데이터</span>
+            <select id="dataset">
+              <option value="notice">입찰공고</option>
+              <option value="result">입찰결과</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>검색 방식</span>
+            <select id="mode">
+              <option value="keyword">검색어</option>
+              <option value="apartment">아파트명</option>
+              <option value="method">입찰방법</option>
+              <option value="kind">입찰종류</option>
+              <option value="status">입찰상태</option>
+              <option value="aptCode">단지코드</option>
+            </select>
+          </label>
+          <label class="field value-field">
+            <span id="valueLabel">검색어</span>
+            <input id="searchValue" type="text" placeholder="예: 승강기, CCTV, 방수" />
+          </label>
+          <label class="field">
+            <span>검색년도</span>
+            <input id="searchYear" type="number" min="2018" max="2026" value="2026" />
+          </label>
+          <label class="field">
+            <span>조회 건수</span>
+            <select id="numOfRows">
+              <option>20</option>
+              <option selected>50</option>
+              <option>100</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="searchBtn" type="button">검색</button>
+          <button id="sampleBtn" type="button" class="ghost">예시 분석 보기</button>
+          <button id="clearBtn" type="button" class="ghost">초기화</button>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="분석 요약">
+        <article>
+          <strong id="statCount">0</strong>
+          <span>검색 결과</span>
+        </article>
+        <article>
+          <strong id="statRegions">0</strong>
+          <span>지역 코드</span>
+        </article>
+        <article>
+          <strong id="statMethods">0</strong>
+          <span>입찰방법</span>
+        </article>
+        <article>
+          <strong id="statFiles">0</strong>
+          <span>첨부 공고문</span>
+        </article>
+      </section>
+
+      <section class="analysis-grid">
+        <div class="panel">
+          <h2>지역별 구분</h2>
+          <div id="regionChart" class="bars"></div>
+        </div>
+        <div class="panel">
+          <h2>입찰종류/방법</h2>
+          <div id="methodChart" class="bars"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="table-head">
+          <div>
+            <h2>입찰 목록</h2>
+            <p id="statusText">검색 조건을 입력하세요.</p>
+          </div>
+          <button id="exportBtn" type="button" class="ghost">CSV 내보내기</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>공고명</th>
+                <th>단지명</th>
+                <th>지역</th>
+                <th>입찰종류</th>
+                <th>입찰방법</th>
+                <th>공고일</th>
+                <th>마감일</th>
+                <th>공고문</th>
+              </tr>
+            </thead>
+            <tbody id="resultRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="footer">기획·제작: 관리사무소장 김상면</footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

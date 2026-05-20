@@ -1,0 +1,9 @@
+{
+  "name": "kapt-search-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Free local K-apt bid search and analysis app",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
