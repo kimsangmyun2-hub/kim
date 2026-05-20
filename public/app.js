@@ -31,7 +31,7 @@ function normalizeItem(item) {
     kind: item.codeKind || item.bidKnd || "",
     method: item.codeWay || item.bidMethod || "",
     state: item.bidState || item.bidSttus || "",
-    noticeDate: item.bidRegdate || item.pblancDe || item.bidPblancDe || "",
+    noticeDate: item.bidRegDate || item.bidRegdate || item.pblancDe || item.bidPblancDe || "",
     closeDate: item.bidDeadline || item.bidClosDe || "",
     fileSeq: item.bidFileSeq || "",
     content: item.bidContent || "",
