@@ -15,6 +15,7 @@ const codeMaps = {
 const modeConfig = {
   keyword: { label: "검색어", param: "bidTitle", placeholder: "예: 승강기, CCTV, 방수" },
   apartment: { label: "아파트명", param: "bidKaptName", placeholder: "예: 동신2단지" },
+  region: { label: "지역", param: "bidArea", placeholder: "지역 선택" },
   method: { label: "입찰방법 코드", param: "codeWay", placeholder: "00 직접입찰, 01 전자입찰" },
   kind: { label: "입찰종류 코드", param: "codeKind", placeholder: "01 일반, 02 제한, 03 지명" },
   status: { label: "입찰상태 코드", param: "bidState", placeholder: "1 신규, 2 수정, 3 재공고" },
@@ -27,6 +28,7 @@ function normalizeItem(item) {
   return {
     title: item.bidTitle || item.bidPblancNm || item.pblancNm || "",
     apartment: item.bidKaptname || item.bidKaptName || item.hsmpNm || item.kaptName || "",
+    households: item.kaptdaCnt || item.hshldCo || item.householdCount || item.hshldCnt || item.hoCnt || item.households || "",
     area: item.bidArea || item.legaldongSidoCd || "",
     kind: item.codeKind || item.bidKnd || "",
     method: item.codeWay || item.bidMethod || "",
@@ -48,6 +50,9 @@ function updateMode() {
   const config = modeConfig[$("mode").value];
   $("valueLabel").textContent = config.label;
   $("searchValue").placeholder = config.placeholder;
+  const isRegion = $("mode").value === "region";
+  $("searchValue").hidden = isRegion;
+  $("regionValue").hidden = !isRegion;
 }
 
 function setStatus(message) {
@@ -99,6 +104,7 @@ function renderRows(rows) {
         <tr>
           <td>${escapeHtml(row.title || "-")}</td>
           <td>${escapeHtml(row.apartment || "-")}</td>
+          <td>${escapeHtml(row.households || "-")}</td>
           <td>${escapeHtml(label("bidArea", row.area))}</td>
           <td>${escapeHtml(label("codeKind", row.kind))}</td>
           <td>${escapeHtml(label("codeWay", row.method))}</td>
@@ -107,7 +113,7 @@ function renderRows(rows) {
           <td>${fileUrl ? `<a href="${fileUrl}" target="_blank" rel="noreferrer">열기</a>` : "-"}</td>
         </tr>
       `;
-    }).join("") || `<tr><td colspan="8" class="empty">검색 결과가 없습니다.</td></tr>`;
+    }).join("") || `<tr><td colspan="9" class="empty">검색 결과가 없습니다.</td></tr>`;
 }
 
 function escapeHtml(value) {
@@ -128,7 +134,7 @@ async function search() {
     numOfRows: $("numOfRows").value,
     pageNo: "1"
   });
-  params.set(config.param, $("searchValue").value.trim());
+  params.set(config.param, mode === "region" ? $("regionValue").value : $("searchValue").value.trim());
 
   setStatus("K-apt API를 조회하고 있습니다.");
   $("searchBtn").disabled = true;
@@ -143,7 +149,10 @@ async function search() {
     const cacheText = data.cached ? "저장된 검색 결과를 사용했습니다." : "K-apt API에서 새로 조회했습니다.";
     const apiStatus = data.status && data.status !== 200 ? ` · API 상태: ${data.status}` : "";
     const apiMessage = data.rawSnippet ? ` · 원문 오류: ${data.rawSnippet.trim()}` : "";
-    setStatus(`${data.endpoint} 기준 ${currentRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()} · ${cacheText}${apiStatus}${apiMessage}`);
+    const householdNote = currentRows.some((row) => row.households)
+      ? ""
+      : " · 세대수는 입찰 API에 포함되지 않아 별도 단지정보 API 연동이 필요합니다.";
+    setStatus(`${data.endpoint} 기준 ${currentRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()} · ${cacheText}${apiStatus}${apiMessage}${householdNote}`);
   } catch (error) {
     setStatus(error.message);
   } finally {
@@ -153,10 +162,10 @@ async function search() {
 
 function loadSample() {
   currentRows = [
-    { title: "승강기 로프 교체공사 업체 선정", apartment: "한빛마을 1단지", area: "41", kind: "02", method: "01", noticeDate: "2026-03-04", closeDate: "2026-03-14", fileSeq: "" },
-    { title: "CCTV 증설 및 교체공사", apartment: "푸른아파트", area: "11", kind: "01", method: "01", noticeDate: "2026-02-20", closeDate: "2026-03-02", fileSeq: "" },
-    { title: "옥상 방수공사 사업자 선정", apartment: "동신2단지", area: "52", kind: "02", method: "00", noticeDate: "2026-01-12", closeDate: "2026-01-22", fileSeq: "" },
-    { title: "소방시설 보수공사", apartment: "해오름마을", area: "26", kind: "01", method: "01", noticeDate: "2026-04-08", closeDate: "2026-04-18", fileSeq: "" }
+    { title: "승강기 로프 교체공사 업체 선정", apartment: "한빛마을 1단지", households: "812", area: "41", kind: "02", method: "01", noticeDate: "2026-03-04", closeDate: "2026-03-14", fileSeq: "" },
+    { title: "CCTV 증설 및 교체공사", apartment: "푸른아파트", households: "498", area: "11", kind: "01", method: "01", noticeDate: "2026-02-20", closeDate: "2026-03-02", fileSeq: "" },
+    { title: "옥상 방수공사 사업자 선정", apartment: "동신2단지", households: "660", area: "52", kind: "02", method: "00", noticeDate: "2026-01-12", closeDate: "2026-01-22", fileSeq: "" },
+    { title: "소방시설 보수공사", apartment: "해오름마을", households: "1,024", area: "26", kind: "01", method: "01", noticeDate: "2026-04-08", closeDate: "2026-04-18", fileSeq: "" }
   ];
   renderStats(currentRows);
   renderRows(currentRows);
@@ -175,9 +184,9 @@ function exportCsv() {
     setStatus("내보낼 검색 결과가 없습니다.");
     return;
   }
-  const header = ["공고명", "단지명", "지역", "입찰종류", "입찰방법", "공고일", "마감일"];
+  const header = ["공고명", "단지명", "세대수", "지역", "입찰종류", "입찰방법", "공고일", "마감일"];
   const lines = currentRows.map((row) =>
-    [row.title, row.apartment, label("bidArea", row.area), label("codeKind", row.kind), label("codeWay", row.method), row.noticeDate, row.closeDate]
+    [row.title, row.apartment, row.households, label("bidArea", row.area), label("codeKind", row.kind), label("codeWay", row.method), row.noticeDate, row.closeDate]
       .map((value) => `"${String(value || "").replace(/"/g, '""')}"`)
       .join(",")
   );

@@ -31,6 +31,7 @@
             <select id="mode">
               <option value="keyword">검색어</option>
               <option value="apartment">아파트명</option>
+              <option value="region">지역</option>
               <option value="method">입찰방법</option>
               <option value="kind">입찰종류</option>
               <option value="status">입찰상태</option>
@@ -40,6 +41,25 @@
           <label class="field value-field">
             <span id="valueLabel">검색어</span>
             <input id="searchValue" type="text" placeholder="예: 승강기, CCTV, 방수" />
+            <select id="regionValue" hidden>
+              <option value="11">서울</option>
+              <option value="26">부산</option>
+              <option value="27">대구</option>
+              <option value="28">인천</option>
+              <option value="29">광주</option>
+              <option value="30">대전</option>
+              <option value="31">울산</option>
+              <option value="36">세종</option>
+              <option value="41">경기</option>
+              <option value="43">충북</option>
+              <option value="44">충남</option>
+              <option value="46">전남</option>
+              <option value="47">경북</option>
+              <option value="48">경남</option>
+              <option value="50">제주</option>
+              <option value="51">강원</option>
+              <option value="52">전북</option>
+            </select>
           </label>
           <label class="field">
             <span>검색년도</span>
@@ -106,6 +126,7 @@
               <tr>
                 <th>공고명</th>
                 <th>단지명</th>
+                <th>세대수</th>
                 <th>지역</th>
                 <th>입찰종류</th>
                 <th>입찰방법</th>
