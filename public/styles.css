@@ -107,6 +107,21 @@ h2 {
   letter-spacing: 0;
 }
 
+.click-logo {
+  position: relative;
+}
+
+.click-logo::after {
+  content: "클릭";
+  margin-left: 9px;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.22);
+  color: currentColor;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .kapt-logo {
   background: #0d6b60;
   color: #fff;
@@ -142,6 +157,10 @@ h2 {
   background: #3f3427;
   color: #fff;
   font-size: 12px;
+}
+
+.case-logo.click-logo::after {
+  background: rgba(63, 52, 39, 0.1);
 }
 
 .top-logo {
@@ -518,6 +537,12 @@ td a {
   border-radius: 8px;
   background: #fff;
   text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.menu-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
 
 .menu-card.primary {
