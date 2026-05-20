@@ -114,12 +114,18 @@ function parseXml(xml) {
 function buildApiUrl(service, endpoint, query) {
   const url = new URL(`${service}/${endpoint.path}`);
   for (const [key, value] of Object.entries(query)) {
+    if (key === "serviceKey") continue;
     if (value !== undefined && value !== null && String(value).trim() !== "") {
       url.searchParams.set(key, String(value).trim());
     }
   }
   url.searchParams.set("pageNo", query.pageNo || "1");
   url.searchParams.set("numOfRows", query.numOfRows || "50");
+  const serviceKey = String(query.serviceKey || "").trim();
+  if (serviceKey) {
+    const encodedKey = serviceKey.includes("%") ? serviceKey : encodeURIComponent(serviceKey);
+    url.search = `?serviceKey=${encodedKey}&${url.searchParams.toString()}`;
+  }
   return url;
 }
 
