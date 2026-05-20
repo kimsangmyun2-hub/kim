@@ -29,7 +29,7 @@ function normalizeItem(item) {
     title: item.bidTitle || item.bidPblancNm || item.pblancNm || "",
     apartment: item.bidKaptname || item.bidKaptName || item.hsmpNm || item.kaptName || "",
     households: item.households || item.kaptdaCnt || item.kaptDaCnt || item.hshldCo || item.householdCount || item.hshldCnt || item.hoCnt || "",
-    area: item.bidArea || item.legaldongSidoCd || "",
+    area: String(item.bidArea || item.legaldongSidoCd || ""),
     kind: item.codeKind || item.bidKnd || "",
     method: item.codeWay || item.bidMethod || "",
     state: item.bidState || item.bidSttus || "",
@@ -43,7 +43,7 @@ function normalizeItem(item) {
 
 function label(mapName, value) {
   if (!value) return "-";
-  return codeMaps[mapName][value] || value;
+  return codeMaps[mapName][String(value)] || value;
 }
 
 function updateMode() {
@@ -60,7 +60,7 @@ function countBy(rows, key) {
   const counts = new Map();
   for (const row of rows) {
     const value = row[key] || "미분류";
-    counts.set(value, (counts.get(value) || 0) + 1);
+    counts.set(String(value), (counts.get(String(value)) || 0) + 1);
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
@@ -69,24 +69,24 @@ function renderBars(id, entries, mapName) {
   const max = entries[0]?.[1] || 1;
   $(id).innerHTML =
     entries.slice(0, 8).map(([name, count]) => {
-      const width = Math.max(6, Math.round((count / max) * 100));
+      const width = Math.max(4, Math.round((count / max) * 100));
       return `
         <div class="bar-row">
-          <span title="${name}">${label(mapName, name)}</span>
+          <span title="${escapeHtml(label(mapName, name))}">${escapeHtml(label(mapName, name))}</span>
           <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
-          <strong>${count}</strong>
+          <strong>${count.toLocaleString()}</strong>
         </div>
       `;
-    }).join("") || `<p class="empty">표시할 데이터가 없습니다.</p>`;
+    }).join("") || `<p class="empty compact">표시할 데이터가 없습니다.</p>`;
 }
 
 function renderStats(rows) {
-  $("statCount").textContent = rows.length.toLocaleString();
-  $("statRegions").textContent = countBy(rows, "area").length.toLocaleString();
-  $("statMethods").textContent = countBy(rows, "method").length.toLocaleString();
-  $("statFiles").textContent = rows.filter((row) => row.fileSeq).length.toLocaleString();
-  renderBars("regionChart", countBy(rows, "area"), "bidArea");
-  renderBars("methodChart", [...countBy(rows, "kind"), ...countBy(rows, "method")].slice(0, 8), "codeKind");
+  const regionEntries = countBy(rows, "area");
+  const methodEntries = [...countBy(rows, "kind"), ...countBy(rows, "method")].slice(0, 8);
+  renderBars("regionChart", regionEntries, "bidArea");
+  renderBars("methodChart", methodEntries, "codeKind");
+  $("regionSummary").textContent = rows.length ? `${regionEntries.length.toLocaleString()}개 지역` : "-";
+  $("methodSummary").textContent = rows.length ? `${methodEntries.length.toLocaleString()}개 항목` : "-";
 }
 
 function applyRegionFilter() {
@@ -155,24 +155,13 @@ async function search() {
     const householdNote = currentRows.some((row) => row.households)
       ? ""
       : " · 세대수 정보를 찾지 못한 단지가 있습니다.";
-    const filterText = $("regionFilter").value ? ` · 지역 필터 적용: ${label("bidArea", $("regionFilter").value)} ${currentRows.length.toLocaleString()}건` : "";
+    const filterText = $("regionFilter").value ? ` · 지역 필터: ${label("bidArea", $("regionFilter").value)} ${currentRows.length.toLocaleString()}건` : "";
     setStatus(`${data.endpoint} 기준 ${allRows.length.toLocaleString()}건을 불러왔습니다. 전체 건수: ${(data.totalCount || 0).toLocaleString()}${filterText} · ${cacheText}${apiStatus}${apiMessage}${householdNote}`);
   } catch (error) {
     setStatus(error.message);
   } finally {
     $("searchBtn").disabled = false;
   }
-}
-
-function loadSample() {
-  allRows = [
-    { title: "승강기 로프 교체공사 업체 선정", apartment: "한빛마을 1단지", households: "812", area: "41", kind: "02", method: "01", noticeDate: "2026-03-04", closeDate: "2026-03-14", fileSeq: "" },
-    { title: "CCTV 증설 및 교체공사", apartment: "푸른아파트", households: "498", area: "11", kind: "01", method: "01", noticeDate: "2026-02-20", closeDate: "2026-03-02", fileSeq: "" },
-    { title: "옥상 방수공사 사업자 선정", apartment: "동신2단지", households: "660", area: "52", kind: "02", method: "00", noticeDate: "2026-01-12", closeDate: "2026-01-22", fileSeq: "" },
-    { title: "소방시설 보수공사", apartment: "해오름마을", households: "1,024", area: "26", kind: "01", method: "01", noticeDate: "2026-04-08", closeDate: "2026-04-18", fileSeq: "" }
-  ];
-  applyRegionFilter();
-  setStatus("예시 데이터로 분석 화면을 표시했습니다. 실제 조회에는 서버 API 인증키 설정이 필요합니다.");
 }
 
 function clearAll() {
@@ -209,7 +198,6 @@ $("regionFilter").addEventListener("change", () => {
   setStatus($("regionFilter").value ? `${label("bidArea", $("regionFilter").value)} 지역 필터를 적용했습니다.` : "지역 필터를 해제했습니다.");
 });
 $("searchBtn").addEventListener("click", search);
-$("sampleBtn").addEventListener("click", loadSample);
 $("clearBtn").addEventListener("click", clearAll);
 $("exportBtn").addEventListener("click", exportCsv);
 
@@ -220,7 +208,7 @@ fetch("/api/config")
   .then((response) => response.json())
   .then((config) => {
     if (!config.hasServiceKey) {
-      setStatus("서버에 API 인증키가 아직 설정되지 않았습니다. 예시 분석은 사용할 수 있습니다.");
+      setStatus("서버에 API 인증키가 아직 설정되지 않았습니다.");
     } else {
       setStatus(`검색 준비 완료. 같은 검색은 약 ${config.cacheMinutes}분간 재사용됩니다.`);
     }

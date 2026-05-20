@@ -80,42 +80,28 @@
 
         <div class="actions">
           <button id="searchBtn" type="button">검색</button>
-          <button id="sampleBtn" type="button" class="ghost">예시 분석 보기</button>
           <button id="clearBtn" type="button" class="ghost">초기화</button>
         </div>
       </section>
 
-      <section class="stats" aria-label="분석 요약">
-        <article>
-          <strong id="statCount">0</strong>
-          <span>검색 결과</span>
-        </article>
-        <article>
-          <strong id="statRegions">0</strong>
-          <span>지역 코드</span>
-        </article>
-        <article>
-          <strong id="statMethods">0</strong>
-          <span>입찰방법</span>
-        </article>
-        <article>
-          <strong id="statFiles">0</strong>
-          <span>첨부 공고문</span>
-        </article>
-      </section>
-
       <section class="analysis-grid">
-        <div class="panel">
-          <h2>지역별 구분</h2>
+        <div class="panel analysis-panel">
+          <div class="panel-title">
+            <h2>지역별 구분</h2>
+            <span id="regionSummary">-</span>
+          </div>
           <div id="regionChart" class="bars"></div>
         </div>
-        <div class="panel">
-          <h2>입찰종류/방법</h2>
+        <div class="panel analysis-panel">
+          <div class="panel-title">
+            <h2>입찰종류/방법</h2>
+            <span id="methodSummary">-</span>
+          </div>
           <div id="methodChart" class="bars"></div>
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel results-panel">
         <div class="table-head">
           <div>
             <h2>입찰 목록</h2>
