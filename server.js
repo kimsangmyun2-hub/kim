@@ -119,7 +119,7 @@ function parseApiResponse(raw) {
     const response = json.response || json.Response || json;
     const header = response.header || {};
     const body = response.body || {};
-    const rawItems = body.items?.item || body.items || response.items?.item || response.items || [];
+    const rawItems = body.items?.item || body.item || body.items || response.items?.item || response.item || response.items || [];
     const items = Array.isArray(rawItems) ? rawItems : rawItems ? [rawItems] : [];
     return {
       resultCode: header.resultCode || response.resultCode || "",
@@ -227,6 +227,12 @@ function findHouseholds(item) {
   return "";
 }
 
+function extractHouseholdsFromText(text) {
+  const source = String(text || "");
+  const match = source.match(/([0-9,]{2,6})\s*세대/);
+  return match ? match[1].replace(/,/g, "") : "";
+}
+
 async function fetchAptInfo(aptCode, serviceKey) {
   if (!aptCode) return null;
   const cached = getCached(`apt:${aptCode}`);
@@ -270,10 +276,16 @@ async function enrichItemsWithAptInfo(items, serviceKey) {
 
   return items.map((item) => {
     const info = aptInfoCache.get(item.aptCode);
-    if (!info) return item;
+    const textHouseholds = extractHouseholdsFromText(item.bidContent);
+    if (!info) {
+      return {
+        ...item,
+        households: findHouseholds(item) || textHouseholds || ""
+      };
+    }
     return {
       ...item,
-      households: findHouseholds(item) || info.households || "",
+      households: findHouseholds(item) || info.households || textHouseholds || "",
       aptBasicInfo: info.raw || undefined
     };
   });
