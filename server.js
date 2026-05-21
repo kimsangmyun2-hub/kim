@@ -586,6 +586,30 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store"
+  });
+  res.end(JSON.stringify(data));
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Invalid JSON body"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 /* =========================
    통합검색 추가 기능 API
    - 유지보수(전체 접근 차단) on/off
