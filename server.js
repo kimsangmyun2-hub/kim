@@ -566,11 +566,105 @@ const server = http.createServer(async (req, res) => {
       handleConfig(res);
       return;
     }
+     if (parsedUrl.pathname === "/api/status") {
+      handleAppStatus(res);
+      return;
+    }
+
+    if (parsedUrl.pathname === "/api/admin/maintenance" && req.method === "POST") {
+      await handleMaintenanceToggle(req, res);
+      return;
+    }
+
+    if (parsedUrl.pathname === "/api/search/local" && req.method === "GET") {
+      handleLocalSearch(req, res, parsedUrl);
+      return;
+    }
     serveStatic(req, res, parsedUrl);
   } catch (error) {
     send(res, 500, JSON.stringify({ error: error.message }));
   }
 });
+
+/* =========================
+   통합검색 추가 기능 API
+   - 유지보수(전체 접근 차단) on/off
+   - 장기수선/DOCS 검색
+========================= */
+
+let MAINTENANCE_MODE = false;
+const ADMIN_KEY = process.env.ADMIN_KEY || "change-this-key";
+
+// 앱 상태 조회
+function handleAppStatus(res) {
+  sendJson(res, 200, { ok: true, maintenance: MAINTENANCE_MODE });
+}
+
+// 관리자: 유지보수 모드 on/off
+async function handleMaintenanceToggle(req, res) {
+  const body = await readJsonBody(req);
+  const enabled = !!body?.enabled;
+  const key = String(body?.key || "");
+
+  if (key !== ADMIN_KEY) {
+    return sendJson(res, 403, { ok: false, message: "unauthorized" });
+  }
+
+  MAINTENANCE_MODE = enabled;
+  return sendJson(res, 200, { ok: true, maintenance: MAINTENANCE_MODE });
+}
+
+// 장기수선/DOCS 로컬 인덱스 (필요 시 파일명/경로 수정)
+const LOCAL_INDEX = {
+  longterm: [
+    {
+      title: "장기수선계획 수립 가이드",
+      content: "수선주기 및 공종별 산정 예시",
+      path: "F:/장기수선/장기수선계획_수립가이드.pdf"
+    },
+    {
+      title: "충당금 적립률 점검표",
+      content: "적립률/집행계획 점검",
+      path: "F:/장기수선/충당금_적립률_점검표.xlsx"
+    }
+  ],
+  docs: [
+    {
+      title: "관리규약 표준안",
+      content: "규약 개정 샘플",
+      path: "F:/DOCS/관리규약_표준안.docx"
+    },
+    {
+      title: "입주자대표회의 운영 매뉴얼",
+      content: "회의 운영 절차",
+      path: "F:/DOCS/입주자대표회의_운영매뉴얼.pdf"
+    }
+  ]
+};
+
+// /api/search/local?target=longterm|docs&q=검색어
+function handleLocalSearch(req, res, parsedUrl) {
+  const target = String(parsedUrl.searchParams.get("target") || "").toLowerCase();
+  const q = String(parsedUrl.searchParams.get("q") || "").trim().toLowerCase();
+
+  if (!["longterm", "docs"].includes(target)) {
+    return sendJson(res, 400, { ok: false, message: "invalid target" });
+  }
+
+  if (!q) {
+    return sendJson(res, 200, { ok: true, items: [] });
+  }
+
+  const items = (LOCAL_INDEX[target] || []).filter((item) => {
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.content.toLowerCase().includes(q) ||
+      item.path.toLowerCase().includes(q)
+    );
+  });
+
+  return sendJson(res, 200, { ok: true, items });
+}
 
 server.listen(PORT, () => {
   console.log(`K-apt search app is running at http://localhost:${PORT}`);
