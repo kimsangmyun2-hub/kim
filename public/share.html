@@ -1,30 +1,137 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>아파트관리 통합검색</title>
-    <meta name="description" content="입찰, 판례, 장기수선, 자료 검색을 한 화면에서 출발하는 아파트관리 통합검색" />
-    <link rel="canonical" href="https://kapt-search-app.onrender.com/share" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://kapt-search-app.onrender.com/share" />
-    <meta property="og:title" content="아파트관리 통합검색" />
-    <meta property="og:description" content="입찰, 판례, 장기수선, 자료 검색을 한 화면에서 출발하는 통합 메뉴" />
-    <meta property="og:image" content="https://kapt-search-app.onrender.com/assets/portal-share.png" />
-    <meta property="og:image:secure_url" content="https://kapt-search-app.onrender.com/assets/portal-share.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://kapt-search-app.onrender.com/assets/portal-share.png" />
-    <link rel="image_src" href="https://kapt-search-app.onrender.com/assets/portal-share.png" />
-    <meta itemprop="image" content="https://kapt-search-app.onrender.com/assets/portal-share.png" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-2" />
-  </head>
-  <body class="share-body">
-    <main class="share-card">
-      <img src="./assets/portal-share.png" alt="아파트관리 통합검색" />
-      <a href="./">아파트관리 통합검색 열기</a>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>아파트관리 통합검색</title>
+  <meta name="description" content="입찰, 판례, 장기수선, 자료 검색 통합 메뉴" />
+  <link rel="stylesheet" href="./styles.css?v=20260520-2" />
+</head>
+<body class="share-body">
+  <main class="share-card" style="max-width:980px;margin:30px auto;padding:20px;">
+    <img src="./assets/portal-share.png" alt="아파트관리 통합검색" style="max-width:220px;display:block;margin-bottom:12px;" />
+    <a href="/" style="display:inline-block;margin-bottom:16px;">← 아파트관리 통합검색 열기</a>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button id="btnLongterm" type="button">장기수선</button>
+      <button id="btnDocs" type="button">DOCS</button>
+    </div>
+
+    <section id="localSearchPanel" style="margin-top:10px;padding:16px;border:1px solid #ddd;border-radius:10px;background:#fafafa;">
+      <h3 id="localSearchTitle" style="margin:0 0 10px;">장기수선 / DOCS 검색</h3>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="localSearchInput" type="text" placeholder="검색어 입력 (예: 장기수선, 규약, 회의록)"
+               style="flex:1;min-width:220px;padding:10px;border:1px solid #ccc;border-radius:8px;" />
+        <button id="btnRunLocalSearch" type="button" style="padding:10px 14px;">검색</button>
+        <button id="btnClearLocalSearch" type="button" style="padding:10px 14px;">초기화</button>
+      </div>
+
+      <p id="localSearchNotice" style="margin:10px 0 0;color:#666;font-size:13px;"></p>
+      <div id="localSearchResults" style="margin-top:12px;display:grid;gap:10px;"></div>
+    </section>
+
+    <section style="margin-top:20px;padding:16px;border:1px solid #ddd;border-radius:10px;background:#fff7ed;">
+      <h3 style="margin:0 0 10px;">관리자 기능</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="btnMaintenanceOn" type="button">전체 접근 차단 ON</button>
+        <button id="btnMaintenanceOff" type="button">전체 접근 차단 OFF</button>
+        <button id="btnCheckStatus" type="button">상태 확인</button>
+      </div>
+      <p id="maintenanceNotice" style="margin:10px 0 0;color:#7c2d12;font-size:13px;"></p>
+    </section>
+  </main>
+
+  <script>
+    let currentTarget = "longterm";
+
+    const elInput = document.getElementById("localSearchInput");
+    const elResults = document.getElementById("localSearchResults");
+    const elNotice = document.getElementById("localSearchNotice");
+    const elTitle = document.getElementById("localSearchTitle");
+    const elMaintNotice = document.getElementById("maintenanceNotice");
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function setTarget(target) {
+      currentTarget = target;
+      elTitle.textContent = target === "longterm" ? "장기수선 검색" : "DOCS 검색";
+      elNotice.textContent = `${target === "longterm" ? "장기수선" : "DOCS"} 대상 검색 모드입니다.`;
+      elResults.innerHTML = "";
+      elInput.focus();
+    }
+
+    async function runLocalSearch() {
+      const q = (elInput.value || "").trim();
+      if (!q) {
+        elNotice.textContent = "검색어를 입력해 주세요.";
+        return;
+      }
+      const res = await fetch(`/api/search/local?target=${encodeURIComponent(currentTarget)}&q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        elNotice.textContent = data.message || "검색 중 오류";
+        return;
+      }
+
+      const items = data.items || [];
+      elNotice.textContent = `'${q}' 검색 결과 ${items.length}건`;
+      if (!items.length) {
+        elResults.innerHTML = `<div>검색 결과가 없습니다.</div>`;
+        return;
+      }
+
+      elResults.innerHTML = items.map((item, idx) => `
+        <article style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+          <div style="font-weight:700;">${idx + 1}. ${escapeHtml(item.title)}</div>
+          <div style="margin-top:6px;color:#374151;">${escapeHtml(item.content)}</div>
+          <div style="margin-top:8px;font-size:12px;color:#6b7280;">${escapeHtml(item.path)}</div>
+        </article>
+      `).join("");
+    }
+
+    async function setMaintenance(enabled) {
+      const key = prompt("관리자 키 입력");
+      if (!key) return;
+      const res = await fetch("/api/admin/maintenance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled, key })
+      });
+      const data = await res.json();
+      elMaintNotice.textContent = (!res.ok || !data.ok)
+        ? `실패: ${data.message || "권한 오류"}`
+        : `완료: maintenance=${data.maintenance}`;
+    }
+
+    async function checkStatus() {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      elMaintNotice.textContent = `현재 상태: maintenance=${data.maintenance}`;
+    }
+
+    document.getElementById("btnLongterm").addEventListener("click", () => setTarget("longterm"));
+    document.getElementById("btnDocs").addEventListener("click", () => setTarget("docs"));
+    document.getElementById("btnRunLocalSearch").addEventListener("click", runLocalSearch);
+    document.getElementById("btnClearLocalSearch").addEventListener("click", () => {
+      elInput.value = "";
+      elResults.innerHTML = "";
+      elNotice.textContent = "";
+    });
+    document.getElementById("btnMaintenanceOn").addEventListener("click", () => setMaintenance(true));
+    document.getElementById("btnMaintenanceOff").addEventListener("click", () => setMaintenance(false));
+    document.getElementById("btnCheckStatus").addEventListener("click", checkStatus);
+    elInput.addEventListener("keydown", (e) => { if (e.key === "Enter") runLocalSearch(); });
+
+    setTarget("longterm");
+  </script>
+</body>
 </html>
