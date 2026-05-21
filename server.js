@@ -535,7 +535,7 @@ function handleConfig(res) {
 
 function serveStatic(req, res, parsedUrl) {
   const routes = {
-    "/": "/index.html",
+    "/": "/share.html",
     "/kapt": "/kapt.html",
     "/share": "/share.html",
     "/kapt-share": "/kapt-share.html"
