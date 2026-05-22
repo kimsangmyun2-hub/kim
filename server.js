@@ -463,6 +463,7 @@ async function handleApi(req, res, parsedUrl) {
   const dataset = params.dataset || "notice";
   const mode = params.mode || "keyword";
   const serviceKey = SERVICE_KEY;
+  const groupReNotice = String(params.groupReNotice || "off").toLowerCase() === "on";
 
   if (!serviceKey) {
     send(res, 500, JSON.stringify({ error: "The server API key is not configured." }));
@@ -497,7 +498,7 @@ async function handleApi(req, res, parsedUrl) {
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
   const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
-  let finalRows = pickFinalNoticeRows(enrichedItems);
+  let finalRows = groupReNotice ? pickFinalNoticeRows(enrichedItems) : [...enrichedItems];
 
 finalRows = finalRows.map((r) => {
   const bidAmountText = r.낙찰금액 || r.sucsfbidPrc || '';
@@ -536,6 +537,7 @@ payload.summary = {
   avgWon,
   minWon,
   maxWon
+  groupReNotice
 };
   
   if (apiResponse.status === 200) {
@@ -757,20 +759,12 @@ function pickFinalNoticeRows(rows) {
     const method = String(row.입찰방법 || row.bidMthdNm || row.bidMethod || '').trim();
     const date = String(row.공고일 || row.bidDt || row.ntceDate || row.noticeDate || '').trim();
     const noticeNo = String(row.공고번호 || row.bidNtceNo || row.noticeNo || '').trim();
-
-    // 날짜 비교용
     const ts = Date.parse(date.replace(/\./g, '-')) || 0;
 
-    // 핵심: 식별키가 비면 절대 합치지 않도록 row 인덱스를 키로 사용
-    // -> 1건으로 뭉개지는 현상 방지
     let key = '';
-    if (noticeNo) {
-      key = `NO:${noticeNo}`;
-    } else if (title || apt || method || date) {
-      key = `TXT:${title}__${apt}__${method}__${date}`;
-    } else {
-      key = `ROW:${idx}`; // 식별 불가 시 개별 유지
-    }
+    if (noticeNo) key = `NO:${noticeNo}`;
+    else if (title || apt || method || date) key = `TXT:${title}__${apt}__${method}__${date}`;
+    else key = `ROW:${idx}`;
 
     const current = map.get(key);
     if (!current) {
@@ -778,13 +772,11 @@ function pickFinalNoticeRows(rows) {
       return;
     }
 
-    // 더 최신 날짜 우선
     if (ts > current.ts) {
       map.set(key, { row, ts });
       return;
     }
 
-    // 날짜 같으면 낙찰금액 있는 행 우선
     const currAmt = parseBidAmountToWon(current.row.낙찰금액 || current.row.sucsfbidPrc || '');
     const nextAmt = parseBidAmountToWon(row.낙찰금액 || row.sucsfbidPrc || '');
     if (ts === current.ts && nextAmt && !currAmt) {
