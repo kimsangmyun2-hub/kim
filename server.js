@@ -575,7 +575,7 @@ payload.summary = {
   amountCount,
   avgWon,
   minWon,
-  maxWon
+  maxWon,
   groupReNotice
 };
   
