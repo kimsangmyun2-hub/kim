@@ -498,8 +498,28 @@ async function handleApi(req, res, parsedUrl) {
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
   const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
-  let finalRows = groupReNotice ? pickFinalNoticeRows(enrichedItems) : [...enrichedItems];
+  const householdMin = Number(params.householdMin || 0);
+  const householdMax = Number(params.householdMax || 0);
+  
+  if (householdMin && householdMax && householdMin > householdMax) {
+    return sendJson(res, 400, { ok: false, message: "세대수 최소값이 최대값보다 큽니다." });
+  }
 
+  let baseRows = [...enrichedItems];
+  
+  if (householdMin || householdMax) {
+    baseRows = baseRows.filter((row) => {
+      const raw = String(row.세대수 || row.hshldCo || row.households || "").replace(/[^\d]/g, "");
+      const n = raw ? Number(raw) : 0;
+  
+      if (householdMin && n < householdMin) return false;
+      if (householdMax && n > householdMax) return false;
+      return true;
+    });
+  }
+
+  let finalRows = groupReNotice ? pickFinalNoticeRows(baseRows) : baseRows;  
+  
 finalRows = finalRows.map((r) => {
   const bidAmountText = r.낙찰금액 || r.sucsfbidPrc || '';
   const bidAmountWon = parseBidAmountToWon(bidAmountText);
