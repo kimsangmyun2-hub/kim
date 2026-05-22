@@ -506,9 +506,40 @@ async function handleApi(req, res, parsedUrl) {
     cached: false,
     rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
     ...parsed,
-    items: enrichedItems
+    items: finalRows
   };
 
+  let finalRows = pickFinalNoticeRows(enrichedItems);
+
+finalRows = finalRows.map((r) => {
+  const bidAmountText = r.낙찰금액 || r.sucsfbidPrc || '';
+  const bidAmountWon = parseBidAmountToWon(bidAmountText);
+
+  return {
+    ...r,
+    낙찰금액: bidAmountText || '-',
+    bidAmountWon
+  };
+});
+
+const amountRows = finalRows.filter((r) => typeof r.bidAmountWon === 'number');
+const totalCount = finalRows.length;
+const amountCount = amountRows.length;
+const avgWon = amountCount
+  ? Math.round(amountRows.reduce((a, c) => a + c.bidAmountWon, 0) / amountCount)
+  : null;
+const minWon = amountCount ? Math.min(...amountRows.map((r) => r.bidAmountWon)) : null;
+const maxWon = amountCount ? Math.max(...amountRows.map((r) => r.bidAmountWon)) : null;
+
+payload.items = finalRows;
+payload.summary = {
+  totalCount,
+  amountCount,
+  avgWon,
+  minWon,
+  maxWon
+};
+  
   if (apiResponse.status === 200) {
     setCached(key, payload);
   }
