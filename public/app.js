@@ -250,6 +250,17 @@ async function search() {
   });
   params.set(config.param, $("searchValue").value.trim());
 
+  const householdMin = $("householdMin")?.value?.trim();
+  const householdMax = $("householdMax")?.value?.trim();
+  
+  if (householdMin && householdMax && Number(householdMin) > Number(householdMax)) {
+    setStatus("세대수 최소값이 최대값보다 큽니다.");
+    return;
+  }
+  
+  if (householdMin) params.set("householdMin", householdMin);
+  if (householdMax) params.set("householdMax", householdMax);
+
   setStatus("K-apt API를 조회하고 있습니다.");
   $("searchBtn").disabled = true;
 
