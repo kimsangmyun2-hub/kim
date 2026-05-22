@@ -690,6 +690,66 @@ function handleLocalSearch(req, res, parsedUrl) {
   return sendJson(res, 200, { ok: true, items });
 }
 
+function parseBidAmountToWon(value) {
+  if (!value) return null;
+  const raw = String(value).replace(/\s/g, '');
+
+  if (!raw || raw === '-' || raw === '미정' || raw === '해당없음') return null;
+
+  let text = raw.replace(/,/g, '');
+  let total = 0;
+
+  const eokMatch = text.match(/(\d+(?:\.\d+)?)억/);
+  if (eokMatch) {
+    total += Math.round(parseFloat(eokMatch[1]) * 100000000);
+    text = text.replace(eokMatch[0], '');
+  }
+
+  const manMatch = text.match(/(\d+(?:\.\d+)?)만/);
+  if (manMatch) {
+    total += Math.round(parseFloat(manMatch[1]) * 10000);
+    text = text.replace(manMatch[0], '');
+  }
+
+  const plain = text.replace(/[^\d]/g, '');
+  if (plain) total += Number(plain);
+
+  return total > 0 ? total : null;
+}
+
+function pickFinalNoticeRows(rows) {
+  const map = new Map();
+
+  for (const row of rows) {
+    const title = String(row.공고명 || row.bidNtceNm || '').trim();
+    const apt = String(row.단지명 || row.aptNm || '').trim();
+    const method = String(row.입찰방법 || row.bidMthdNm || '').trim();
+    const date = String(row.공고일 || row.bidDt || row.ntceDate || '').trim();
+
+    const ts = Date.parse(date.replace(/\./g, '-')) || 0;
+    const key = `${title}__${apt}__${method}`;
+    const current = map.get(key);
+
+    if (!current) {
+      map.set(key, { row, ts });
+      continue;
+    }
+
+    if (ts > current.ts) {
+      map.set(key, { row, ts });
+      continue;
+    }
+
+    const currAmt = parseBidAmountToWon(current.row.낙찰금액 || current.row.sucsfbidPrc || '');
+    const nextAmt = parseBidAmountToWon(row.낙찰금액 || row.sucsfbidPrc || '');
+    if (ts === current.ts && nextAmt && !currAmt) {
+      map.set(key, { row, ts });
+    }
+  }
+
+  return Array.from(map.values()).map(v => v.row);
+}
+
 server.listen(PORT, () => {
   console.log(`K-apt search app is running at http://localhost:${PORT}`);
 });
