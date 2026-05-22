@@ -747,41 +747,50 @@ function parseBidAmountToWon(value) {
 }
 
 function pickFinalNoticeRows(rows) {
+  if (!Array.isArray(rows)) return [];
+
   const map = new Map();
 
-  for (const row of rows) {
-    const title = String(row.공고명 || row.bidNtceNm || '').trim();
-    const apt = String(row.단지명 || row.aptNm || '').trim();
-    const method = String(row.입찰방법 || row.bidMthdNm || '').trim();
-    const date = String(row.공고일 || row.bidDt || row.ntceDate || '').trim();
+  rows.forEach((row, idx) => {
+    const title = String(row.공고명 || row.bidNtceNm || row.bidTitle || '').trim();
+    const apt = String(row.단지명 || row.aptNm || row.bidKaptName || '').trim();
+    const method = String(row.입찰방법 || row.bidMthdNm || row.bidMethod || '').trim();
+    const date = String(row.공고일 || row.bidDt || row.ntceDate || row.noticeDate || '').trim();
+    const noticeNo = String(row.공고번호 || row.bidNtceNo || row.noticeNo || '').trim();
 
+    // 날짜 비교용
     const ts = Date.parse(date.replace(/\./g, '-')) || 0;
-    const noticeNo = String(row.공고번호 || row.bidNtceNo || '').trim();
-    const key = noticeNo
-      ? `${noticeNo}__${method}`
-      : `${title}__${apt}__${method}__${date}`;
-    const current = map.get(key);
 
+    // 핵심: 식별키가 비면 절대 합치지 않도록 row 인덱스를 키로 사용
+    // -> 1건으로 뭉개지는 현상 방지
+    let key = '';
+    if (noticeNo) {
+      key = `NO:${noticeNo}`;
+    } else if (title || apt || method || date) {
+      key = `TXT:${title}__${apt}__${method}__${date}`;
+    } else {
+      key = `ROW:${idx}`; // 식별 불가 시 개별 유지
+    }
+
+    const current = map.get(key);
     if (!current) {
       map.set(key, { row, ts });
-      continue;
+      return;
     }
 
+    // 더 최신 날짜 우선
     if (ts > current.ts) {
       map.set(key, { row, ts });
-      continue;
+      return;
     }
 
+    // 날짜 같으면 낙찰금액 있는 행 우선
     const currAmt = parseBidAmountToWon(current.row.낙찰금액 || current.row.sucsfbidPrc || '');
     const nextAmt = parseBidAmountToWon(row.낙찰금액 || row.sucsfbidPrc || '');
     if (ts === current.ts && nextAmt && !currAmt) {
       map.set(key, { row, ts });
     }
-  }
+  });
 
   return Array.from(map.values()).map(v => v.row);
 }
-
-server.listen(PORT, () => {
-  console.log(`K-apt search app is running at http://localhost:${PORT}`);
-});
