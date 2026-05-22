@@ -497,18 +497,6 @@ async function handleApi(req, res, parsedUrl) {
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
   const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
-  const payload = {
-    dataset,
-    mode,
-    endpoint: endpoint.path,
-    requestedUrl: apiUrl.toString().replace(encodeURIComponent(serviceKey), "SERVICE_KEY").replace(serviceKey, "SERVICE_KEY"),
-    status: apiResponse.status,
-    cached: false,
-    rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
-    ...parsed,
-    items: finalRows
-  };
-
   let finalRows = pickFinalNoticeRows(enrichedItems);
 
 finalRows = finalRows.map((r) => {
@@ -530,8 +518,18 @@ const avgWon = amountCount
   : null;
 const minWon = amountCount ? Math.min(...amountRows.map((r) => r.bidAmountWon)) : null;
 const maxWon = amountCount ? Math.max(...amountRows.map((r) => r.bidAmountWon)) : null;
+  const payload = {
+    dataset,
+    mode,
+    endpoint: endpoint.path,
+    requestedUrl: apiUrl.toString().replace(encodeURIComponent(serviceKey), "SERVICE_KEY").replace(serviceKey, "SERVICE_KEY"),
+    status: apiResponse.status,
+    cached: false,
+    rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
+    ...parsed,
+    items: finalRows
+  };
 
-payload.items = finalRows;
 payload.summary = {
   totalCount,
   amountCount,
