@@ -121,20 +121,42 @@ function parseXml(xml) {
   };
 }
 
+function toArray(v) {
+  if (Array.isArray(v)) return v;
+  if (v === null || v === undefined) return [];
+  return [v];
+}
+
 function parseApiResponse(raw) {
   try {
     const json = JSON.parse(raw);
-    const response = json.response || json.Response || json;
-    const header = response.header || {};
-    const body = response.body || {};
-    const rawItems = body.items?.item || body.item || body.items || response.items?.item || response.item || response.items || [];
-    const items = Array.isArray(rawItems) ? rawItems : rawItems ? [rawItems] : [];
+
+    // 응답 루트 후보들 (API마다 형태가 달라서 다 열어둠)
+    const response = json?.response || json?.Response || json;
+    const body = response?.body || response?.Body || response || {};
+    const header = response?.header || response?.Header || {};
+
+    // item 경로 후보를 넓게 탐색
+    const rawItems =
+      body?.items?.item ??
+      body?.items?.Item ??
+      body?.item ??
+      response?.items?.item ??
+      response?.items?.Item ??
+      response?.item ??
+      json?.items?.item ??
+      json?.items?.Item ??
+      json?.item ??
+      [];
+
+    const items = toArray(rawItems).filter(Boolean);
+
     return {
-      resultCode: header.resultCode || response.resultCode || "",
-      resultMsg: header.resultMsg || response.resultMsg || "",
-      totalCount: Number(body.totalCount || response.totalCount || items.length || 0),
-      pageNo: Number(body.pageNo || response.pageNo || 1),
-      numOfRows: Number(body.numOfRows || response.numOfRows || items.length || 0),
+      resultCode: header?.resultCode || response?.resultCode || "",
+      resultMsg: header?.resultMsg || response?.resultMsg || "",
+      totalCount: Number(body?.totalCount || response?.totalCount || items.length || 0),
+      pageNo: Number(body?.pageNo || response?.pageNo || 1),
+      numOfRows: Number(body?.numOfRows || response?.numOfRows || items.length || 0),
       items
     };
   } catch {
@@ -497,6 +519,7 @@ async function handleApi(req, res, parsedUrl) {
   const apiUrl = buildApiUrl(service, endpoint, query);
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
+  console.log("[DEBUG] totalCount:", parsed.totalCount, "items.length:", (parsed.items || []).length);
   const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
   const householdMin = Number(params.householdMin || 0);
   const householdMax = Number(params.householdMax || 0);
