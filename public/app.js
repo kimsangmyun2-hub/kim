@@ -260,7 +260,8 @@ async function search() {
   
   if (householdMin) params.set("householdMin", householdMin);
   if (householdMax) params.set("householdMax", householdMax);
-
+  params.set("groupReNotice", $("groupReNotice")?.value || "off");
+  
   setStatus("K-apt API를 조회하고 있습니다.");
   $("searchBtn").disabled = true;
 
