@@ -509,18 +509,14 @@ async function handleApi(req, res, parsedUrl) {
   }
 
   const key = cacheKey(dataset, mode, query);
-  const cached = getCached(key);
-  if (cached) {
-    send(res, 200, JSON.stringify({ ...cached, cached: true }));
-    return;
-  }
-
+  const cached = null; // 임시: 원인 확인용으로 캐시 비활성화
   const service = dataset === "result" ? RESULT_SERVICE : NOTICE_SERVICE;
   const apiUrl = buildApiUrl(service, endpoint, query);
   const apiResponse = await requestUrl(apiUrl);
   const parsed = parseApiResponse(apiResponse.raw);
   console.log("[DEBUG] totalCount:", parsed.totalCount, "items.length:", (parsed.items || []).length);
   const enrichedItems = await enrichItemsWithAptInfo(parsed.items, serviceKey);
+  console.log("[DEBUG] enrichedItems.length:", enrichedItems.length);
   const householdMin = Number(params.householdMin || 0);
   const householdMax = Number(params.householdMax || 0);
   
