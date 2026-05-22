@@ -163,6 +163,42 @@ h2 {
   background: rgba(63, 52, 39, 0.1);
 }
 
+/* ===== 통합검색 카드 아이콘 확장 ===== */
+.btn-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  flex: 0 0 auto;
+}
+
+.app-title {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.app-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.arrow {
+  font-size: 18px;
+  color: #334155;
+  font-weight: 700;
+}
+
 .top-logo {
   margin-bottom: 8px;
 }
