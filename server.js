@@ -756,7 +756,10 @@ function pickFinalNoticeRows(rows) {
     const date = String(row.공고일 || row.bidDt || row.ntceDate || '').trim();
 
     const ts = Date.parse(date.replace(/\./g, '-')) || 0;
-    const key = `${title}__${apt}__${method}`;
+    const noticeNo = String(row.공고번호 || row.bidNtceNo || '').trim();
+    const key = noticeNo
+      ? `${noticeNo}__${method}`
+      : `${title}__${apt}__${method}__${date}`;
     const current = map.get(key);
 
     if (!current) {
