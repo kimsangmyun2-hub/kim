@@ -4,184 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>아파트관리 통합검색</title>
-  <meta name="description" content="입찰, 판례, 장기수선, 자료 검색 통합 메뉴" />
-  <link rel="stylesheet" href="./styles.css?v=20260521-1" />
   <style>
-    .wrap { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
-    .panel { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fff; margin-top: 14px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .input { flex: 1; min-width: 220px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
-    .btn { padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; }
-    .btn-dark { background: #111827; color: #fff; border-color: #111827; }
-    .btn-red { background: #b91c1c; color: #fff; border-color: #b91c1c; }
-    .btn-green { background: #065f46; color: #fff; border-color: #065f46; }
-    .results { margin-top: 12px; display: grid; gap: 10px; }
-    .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fafafa; }
-    .muted { color: #6b7280; font-size: 13px; }
+    body { font-family: sans-serif; background:#f3f4f6; margin:0; }
+    .wrap { max-width:900px; margin:40px auto; padding:0 16px; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:20px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+    .btn {
+      display:flex; justify-content:space-between; align-items:center;
+      text-decoration:none; color:#111827; font-weight:700;
+      border:1px solid #e5e7eb; border-radius:10px; padding:14px 16px; background:#f8fafc;
+    }
+    @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>아파트관리 통합검색</h1>
-    <p class="muted">원하는 버튼을 눌러 장기수선 / DOCS 검색을 실행하세요.</p>
+  <main class="wrap">
+    <section class="card">
+      <h1 style="margin:0 0 8px;">아파트관리 통합검색</h1>
+      <p style="margin:0;color:#6b7280;">원하는 서비스를 선택해 이동하세요.</p>
 
-    <div class="panel">
-      <div class="row">
-        <button id="btnLongterm" class="btn">장기수선</button>
-        <button id="btnDocs" class="btn">DOCS</button>
+      <div class="grid">
+        <a class="btn" href="https://www.k-apt.go.kr/" target="_blank" rel="noreferrer">
+          <span>K-APT</span><span>↗</span>
+        </a>
+        <a class="btn" href="https://glaw.scourt.go.kr/" target="_blank" rel="noreferrer">
+          <span>판례앱</span><span>↗</span>
+        </a>
       </div>
-    </div>
-
-    <section id="localSearchPanel" class="panel">
-      <h3 id="localSearchTitle" style="margin-top:0;">장기수선 검색</h3>
-      <div class="row">
-        <input id="localSearchInput" class="input" type="text" placeholder="검색어 입력 (예: 장기수선, 규약, 회의록)" />
-        <button id="btnRunLocalSearch" class="btn btn-dark" type="button">검색</button>
-        <button id="btnClearLocalSearch" class="btn" type="button">초기화</button>
-      </div>
-      <p id="localSearchNotice" class="muted" style="margin:10px 0 0;"></p>
-      <div id="localSearchResults" class="results"></div>
     </section>
-
-    <section class="panel" style="background:#fff7ed;">
-      <h3 style="margin-top:0;">관리자 기능</h3>
-      <div class="row">
-        <button id="btnMaintenanceOn" class="btn btn-red" type="button">전체 접근 차단 ON</button>
-        <button id="btnMaintenanceOff" class="btn btn-green" type="button">전체 접근 차단 OFF</button>
-        <button id="btnCheckStatus" class="btn" type="button">상태 확인</button>
-      </div>
-      <p id="maintenanceNotice" class="muted" style="margin:10px 0 0;color:#7c2d12;"></p>
-    </section>
-  </div>
-
-  <script>
-    let currentTarget = "longterm"; // longterm | docs
-
-    const elInput = document.getElementById("localSearchInput");
-    const elResults = document.getElementById("localSearchResults");
-    const elNotice = document.getElementById("localSearchNotice");
-    const elTitle = document.getElementById("localSearchTitle");
-    const elMaintNotice = document.getElementById("maintenanceNotice");
-
-    function esc(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function setTarget(target) {
-      currentTarget = target;
-      elTitle.textContent = target === "longterm" ? "장기수선 검색" : "DOCS 검색";
-      elNotice.textContent = `${target === "longterm" ? "장기수선" : "DOCS"} 대상 검색 모드입니다.`;
-      elResults.innerHTML = "";
-      elInput.value = "";
-      elInput.focus();
-    }
-
-    async function runLocalSearch() {
-      const q = (elInput.value || "").trim();
-      if (!q) {
-        elNotice.textContent = "검색어를 입력해 주세요.";
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/search/local?target=${encodeURIComponent(currentTarget)}&q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-
-        if (!res.ok || !data.ok) {
-          elNotice.textContent = data.message || "검색 중 오류가 발생했습니다.";
-          return;
-        }
-
-        const items = data.items || [];
-        elNotice.textContent = `'${q}' 검색 결과 ${items.length}건`;
-        if (!items.length) {
-          elResults.innerHTML = `<div class="card">검색 결과가 없습니다.</div>`;
-          return;
-        }
-
-        elResults.innerHTML = items.map((item, i) => `
-          <article class="card">
-            <div style="font-weight:700;">${i + 1}. ${esc(item.title)}</div>
-            <div style="margin-top:6px;">${esc(item.content)}</div>
-            <div class="muted" style="margin-top:8px;">${esc(item.path)}</div>
-            <button type="button" data-path="${esc(item.path)}" class="btn" style="margin-top:8px;">경로 복사</button>
-          </article>
-        `).join("");
-
-        elResults.querySelectorAll("button[data-path]").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const p = btn.getAttribute("data-path") || "";
-            try {
-              await navigator.clipboard.writeText(p);
-              const prev = btn.textContent;
-              btn.textContent = "복사됨";
-              setTimeout(() => btn.textContent = prev, 1200);
-            } catch {
-              alert("복사 실패: 수동으로 복사해 주세요.");
-            }
-          });
-        });
-      } catch (e) {
-        console.error(e);
-        elNotice.textContent = "네트워크 오류로 검색에 실패했습니다.";
-      }
-    }
-
-    async function setMaintenance(enabled) {
-      const key = prompt("관리자 키를 입력하세요");
-      if (!key) return;
-
-      try {
-        const res = await fetch("/api/admin/maintenance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled, key })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          elMaintNotice.textContent = `실패: ${data.message || "권한 오류"}`;
-          return;
-        }
-        elMaintNotice.textContent = `완료: maintenance=${data.maintenance}`;
-      } catch (e) {
-        console.error(e);
-        elMaintNotice.textContent = "요청 실패";
-      }
-    }
-
-    async function checkStatus() {
-      try {
-        const res = await fetch("/api/status");
-        const data = await res.json();
-        elMaintNotice.textContent = `현재 상태: maintenance=${data.maintenance}`;
-      } catch (e) {
-        console.error(e);
-        elMaintNotice.textContent = "상태 조회 실패";
-      }
-    }
-
-    document.getElementById("btnLongterm").addEventListener("click", () => setTarget("longterm"));
-    document.getElementById("btnDocs").addEventListener("click", () => setTarget("docs"));
-    document.getElementById("btnRunLocalSearch").addEventListener("click", runLocalSearch);
-    document.getElementById("btnClearLocalSearch").addEventListener("click", () => {
-      elInput.value = "";
-      elResults.innerHTML = "";
-      elNotice.textContent = "";
-    });
-    document.getElementById("btnMaintenanceOn").addEventListener("click", () => setMaintenance(true));
-    document.getElementById("btnMaintenanceOff").addEventListener("click", () => setMaintenance(false));
-    document.getElementById("btnCheckStatus").addEventListener("click", checkStatus);
-
-    elInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") runLocalSearch();
-    });
-
-    setTarget("longterm");
-  </script>
+  </main>
 </body>
 </html>
