@@ -560,8 +560,9 @@ td a {
 
 .portal-menu {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  grid-template-columns: 220px 1fr 220px !important;
+  gap: 12px !important;
+  align-items: center !important;
 }
 
 .menu-card {
@@ -906,4 +907,21 @@ td a {
   object-fit: contain !important;
   margin: 0 auto !important;
   display: block !important;
+}
+.portal-menu img {
+  width: 100% !important;
+  max-width: 520px !important;
+  max-height: 420px !important;
+  object-fit: contain !important;
+}
+
+.menu-card {
+  max-width: 220px !important;
+  overflow: hidden !important;
+}
+
+.image-logo {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
