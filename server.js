@@ -139,13 +139,13 @@ function parseApiResponse(raw) {
     // item 경로 후보를 넓게 탐색
     const rawItems =
       body?.items?.item ??
-      body?.items?.Item ??
+      body?.items ??
       body?.item ??
       response?.items?.item ??
-      response?.items?.Item ??
+      response?.items ??
       response?.item ??
       json?.items?.item ??
-      json?.items?.Item ??
+      json?.items ??
       json?.item ??
       [];
 
