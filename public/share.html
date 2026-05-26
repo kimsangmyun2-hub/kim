@@ -6,20 +6,61 @@
   <title>아파트관리 통합검색</title>
   <style>
     body { font-family: sans-serif; background:#f3f4f6; margin:0; }
-    .wrap { max-width:900px; margin:40px auto; padding:0 16px; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:20px; }
+    .wrap {
+      max-width: 1280px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #dbe3ea;
+      border-radius: 24px;
+      padding: 42px;
+      box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.06),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+    }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
     .btn {
-      display:flex; justify-content:space-between; align-items:center;
-      text-decoration:none; color:#111827; font-weight:700;
-      border:1px solid #e5e7eb; border-radius:10px; padding:14px 16px; background:#f8fafc;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      text-decoration:none;
+      color:#111827;
+      font-weight:700;
+      border:1px solid #dbe3ea;
+      border-radius:20px;
+      padding:28px 30px;
+      background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      min-height:120px;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      box-shadow: 0 4px 14px rgba(15,23,42,.05);
+    }
+    .btn:hover {
+      transform: translateY(-4px);
+      border-color: #94a3b8;
+    
+      box-shadow:
+        0 16px 30px rgba(15,23,42,.10);
     }
     .btn-left { display:flex; align-items:center; gap:10px; }
-
+    
+    .app-title {
+      font-size: 30px;
+      font-weight: 900;
+      display:block;
+      margin-bottom:6px;
+    }
+    
+    .app-sub {
+      font-size: 18px;
+      color:#64748b;
+      font-weight:600;
+    }
     .app-icon {
-      width: 48px !important;
-      height: 48px !important;
-      flex: 0 0 48px !important;
+      width: 72px !important;
+      height: 72px !important;
+      flex: 0 0 72px !important;
       object-fit: contain !important;
     }
     @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
@@ -28,8 +69,12 @@
 <body>
   <main class="wrap">
     <section class="card">
-      <h1 style="margin:0 0 8px;">아파트관리 통합검색</h1>
-      <p style="margin:0;color:#6b7280;">원하는 서비스를 선택해 이동하세요.</p>
+      <h1 style="margin:0 0 14px; font-size:48px; font-weight:900; letter-spacing:-1px;">
+        아파트관리 통합검색
+      </h1>
+      <p style="margin:0;color:#64748b;font-size:20px;font-weight:500;">
+        원하는 서비스를 선택해 이동하세요.
+      </p>
 
       <div class="grid">
         <a class="btn" href="https://kapt-search-app.onrender.com/kapt-share" target="_blank" rel="noreferrer">
