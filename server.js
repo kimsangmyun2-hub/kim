@@ -405,7 +405,7 @@ async function fetchAptInfo(aptCode, serviceKey) {
     kaptCode: aptCode,
     aptCode,
     pageNo: 1,
-    numOfRows: 1
+    numOfRows: 50
   };
   const basicUrl = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusBassInfoV4" }, baseQuery);
   const detailUrl = buildApiUrl(BASIC_INFO_SERVICE, { path: "getAphusDtlInfoV4" }, baseQuery);
