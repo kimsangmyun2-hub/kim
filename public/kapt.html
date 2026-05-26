@@ -27,7 +27,93 @@
     <meta itemprop="name" content="K-apt 입찰 검색" />
     <meta itemprop="description" content="K-apt 입찰공고, 입찰결과, 낙찰금액 분석 도구" />
     <meta itemprop="image" content="https://kapt-search-app.onrender.com/assets/kapt-share.png?v=20260520-1" />
-    <link rel="stylesheet" href="./styles.css?v=20260526-ai1" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-ai2" />
+    <style>
+      .table-wrap table th:last-child,
+      .table-wrap table td:last-child {
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        min-width: 96px;
+        text-align: center;
+        background: #ffffff;
+        box-shadow: -10px 0 16px rgba(15, 23, 42, 0.08);
+      }
+      .table-wrap table th:last-child {
+        z-index: 3;
+        background: var(--soft);
+      }
+      .ai-btn {
+        height: 34px;
+        min-width: 74px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: #0d6b60;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .ai-modal[hidden] { display: none; }
+      .ai-modal {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 9999;
+      }
+      .ai-modal-card {
+        width: min(760px, 100%);
+        max-height: 86vh;
+        overflow: auto;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid #dbe3ea;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+      }
+      .ai-modal-head {
+        position: sticky;
+        top: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #dbe3ea;
+      }
+      .ai-modal-body {
+        padding: 20px;
+        line-height: 1.7;
+      }
+      .ai-modal-body h3 {
+        margin: 20px 0 8px;
+        font-size: 16px;
+      }
+      .ai-risk {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-weight: 900;
+      }
+      .ai-risk-높음 { background: #fef2f2; color: #991b1b; }
+      .ai-risk-보통 { background: #fffbeb; color: #92400e; }
+      .ai-risk-낮음 { background: #ecfdf5; color: #065f46; }
+      .ai-disclaimer {
+        margin: 20px 0 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 13px;
+      }
+    </style>
   </head>
   <body>
     <main class="shell">
@@ -45,165 +131,42 @@
 
       <section class="panel controls">
         <div class="grid">
-          <label class="field">
-            <span>데이터</span>
-            <select id="dataset">
-              <option value="notice">입찰공고</option>
-              <option value="result">입찰결과</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>검색 방식</span>
-            <select id="mode">
-              <option value="keyword">검색어</option>
-              <option value="apartment">아파트명</option>
-              <option value="method">입찰방법</option>
-              <option value="kind">입찰종류</option>
-              <option value="status">입찰상태</option>
-              <option value="aptCode">단지코드</option>
-            </select>
-          </label>
-          <label class="field value-field">
-            <span id="valueLabel">검색어</span>
-            <input id="searchValue" type="text" placeholder="예: 승강기, CCTV, 방수" />
-          </label>
-          <label class="field">
-            <span>재공고 묶기</span>
-            <select id="groupReNotice">
-              <option value="off" selected>OFF</option>
-              <option value="on">ON</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>세대수 최소</span>
-            <input id="householdMin" type="number" min="0" placeholder="예: 300" />
-          </label>
-          <label class="field">
-            <span>세대수 최대</span>
-            <input id="householdMax" type="number" min="0" placeholder="예: 1000" />
-          </label>
-          <label class="field">
-            <span>지역 필터</span>
-            <select id="regionFilter">
-              <option value="">전체</option>
-              <option value="11">서울</option>
-              <option value="26">부산</option>
-              <option value="27">대구</option>
-              <option value="28">인천</option>
-              <option value="29">광주</option>
-              <option value="30">대전</option>
-              <option value="31">울산</option>
-              <option value="36">세종</option>
-              <option value="41">경기</option>
-              <option value="43">충북</option>
-              <option value="44">충남</option>
-              <option value="46">전남</option>
-              <option value="47">경북</option>
-              <option value="48">경남</option>
-              <option value="50">제주</option>
-              <option value="51">강원</option>
-              <option value="52">전북</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>검색년도</span>
-            <input id="searchYear" type="number" min="2018" max="2026" value="2026" />
-          </label>
-          <label class="field">
-            <span>조회 건수</span>
-            <select id="numOfRows">
-              <option>20</option>
-              <option selected>50</option>
-              <option>100</option>
-            </select>
-          </label>
+          <label class="field"><span>데이터</span><select id="dataset"><option value="notice">입찰공고</option><option value="result">입찰결과</option></select></label>
+          <label class="field"><span>검색 방식</span><select id="mode"><option value="keyword">검색어</option><option value="apartment">아파트명</option><option value="method">입찰방법</option><option value="kind">입찰종류</option><option value="status">입찰상태</option><option value="aptCode">단지코드</option></select></label>
+          <label class="field value-field"><span id="valueLabel">검색어</span><input id="searchValue" type="text" placeholder="예: 승강기, CCTV, 방수" /></label>
+          <label class="field"><span>재공고 묶기</span><select id="groupReNotice"><option value="off" selected>OFF</option><option value="on">ON</option></select></label>
+          <label class="field"><span>세대수 최소</span><input id="householdMin" type="number" min="0" placeholder="예: 300" /></label>
+          <label class="field"><span>세대수 최대</span><input id="householdMax" type="number" min="0" placeholder="예: 1000" /></label>
+          <label class="field"><span>지역 필터</span><select id="regionFilter"><option value="">전체</option><option value="11">서울</option><option value="26">부산</option><option value="27">대구</option><option value="28">인천</option><option value="29">광주</option><option value="30">대전</option><option value="31">울산</option><option value="36">세종</option><option value="41">경기</option><option value="43">충북</option><option value="44">충남</option><option value="46">전남</option><option value="47">경북</option><option value="48">경남</option><option value="50">제주</option><option value="51">강원</option><option value="52">전북</option></select></label>
+          <label class="field"><span>검색년도</span><input id="searchYear" type="number" min="2018" max="2026" value="2026" /></label>
+          <label class="field"><span>조회 건수</span><select id="numOfRows"><option>20</option><option selected>50</option><option>100</option></select></label>
         </div>
 
-        <div class="actions">
-          <button id="searchBtn" type="button">검색</button>
-          <button id="clearBtn" type="button" class="ghost">초기화</button>
-        </div>
+        <div class="actions"><button id="searchBtn" type="button">검색</button><button id="clearBtn" type="button" class="ghost">초기화</button></div>
       </section>
 
       <section class="analysis-grid">
-        <div class="panel analysis-panel">
-          <div class="panel-title">
-            <h2>지역별 구분</h2>
-            <span id="regionSummary">-</span>
-          </div>
-          <div id="regionChart" class="bars"></div>
-        </div>
-        <div class="panel analysis-panel">
-          <div class="panel-title">
-            <h2>입찰종류/방법</h2>
-            <span id="methodSummary">-</span>
-          </div>
-          <div id="methodChart" class="bars"></div>
-        </div>
+        <div class="panel analysis-panel"><div class="panel-title"><h2>지역별 구분</h2><span id="regionSummary">-</span></div><div id="regionChart" class="bars"></div></div>
+        <div class="panel analysis-panel"><div class="panel-title"><h2>입찰종류/방법</h2><span id="methodSummary">-</span></div><div id="methodChart" class="bars"></div></div>
       </section>
 
       <section class="panel amount-panel">
-        <div class="panel-title">
-          <h2>낙찰금액 분석</h2>
-          <span id="amountSummary">입찰결과에서 표시됩니다.</span>
-        </div>
-        <div class="amount-stats">
-          <div>
-            <span>평균 낙찰금액</span>
-            <strong id="avgAmount">-</strong>
-          </div>
-          <div>
-            <span>최저 낙찰금액</span>
-            <strong id="minAmount">-</strong>
-          </div>
-          <div>
-            <span>최고 낙찰금액</span>
-            <strong id="maxAmount">-</strong>
-          </div>
-          <div>
-            <span>금액 확인 건수</span>
-            <strong id="amountCount">-</strong>
-          </div>
-        </div>
-        <div class="trend-wrap">
-          <h3>월별 낙찰금액 추이</h3>
-          <div id="amountTrend" class="bars"></div>
-        </div>
+        <div class="panel-title"><h2>낙찰금액 분석</h2><span id="amountSummary">입찰결과에서 표시됩니다.</span></div>
+        <div class="amount-stats"><div><span>평균 낙찰금액</span><strong id="avgAmount">-</strong></div><div><span>최저 낙찰금액</span><strong id="minAmount">-</strong></div><div><span>최고 낙찰금액</span><strong id="maxAmount">-</strong></div><div><span>금액 확인 건수</span><strong id="amountCount">-</strong></div></div>
+        <div class="trend-wrap"><h3>월별 낙찰금액 추이</h3><div id="amountTrend" class="bars"></div></div>
       </section>
 
       <section class="panel results-panel">
-        <div class="table-head">
-          <div>
-            <h2>입찰 목록</h2>
-            <p id="statusText">검색 조건을 입력하세요.</p>
-          </div>
-          <button id="exportBtn" type="button" class="ghost">CSV 내보내기</button>
-        </div>
+        <div class="table-head"><div><h2>입찰 목록</h2><p id="statusText">검색 조건을 입력하세요.</p></div><button id="exportBtn" type="button" class="ghost">CSV 내보내기</button></div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>공고명</th>
-                <th>단지명</th>
-                <th>세대수</th>
-                <th>지역</th>
-                <th>입찰종류</th>
-                <th>입찰방법</th>
-                <th>낙찰금액</th>
-                <th>공고일</th>
-                <th>마감일</th>
-                <th>공고문</th>
-                <th>AI분석</th>
-              </tr>
+              <tr><th>공고명</th><th>단지명</th><th>세대수</th><th>지역</th><th>입찰종류</th><th>입찰방법</th><th>낙찰금액</th><th>공고일</th><th>마감일</th><th>공고문</th><th>AI분석</th></tr>
             </thead>
             <tbody id="resultRows"></tbody>
           </table>
         </div>
-        <div class="pagination">
-          <button id="prevPageBtn" type="button" class="ghost">이전</button>
-          <span id="pageInfo">1 / 1</span>
-          <button id="nextPageBtn" type="button" class="ghost">다음</button>
-        </div>
+        <div class="pagination"><button id="prevPageBtn" type="button" class="ghost">이전</button><span id="pageInfo">1 / 1</span><button id="nextPageBtn" type="button" class="ghost">다음</button></div>
       </section>
 
       <footer class="footer">기획·제작: 관리사무소장 김상면</footer>
@@ -211,14 +174,11 @@
 
     <div id="aiModal" class="ai-modal" hidden>
       <div class="ai-modal-card">
-        <div class="ai-modal-head">
-          <h2 id="aiModalTitle">무료 규칙기반 AI 입찰분석</h2>
-          <button id="aiCloseBtn" type="button" class="ghost">닫기</button>
-        </div>
+        <div class="ai-modal-head"><h2 id="aiModalTitle">무료 규칙기반 AI 입찰분석</h2><button id="aiCloseBtn" type="button" class="ghost">닫기</button></div>
         <div id="aiModalBody" class="ai-modal-body"></div>
       </div>
     </div>
 
-    <script src="./app.js?v=20260526-ai1"></script>
+    <script src="./app.js?v=20260526-ai2"></script>
   </body>
 </html>
