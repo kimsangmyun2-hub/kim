@@ -853,3 +853,6 @@ function pickFinalNoticeRows(rows) {
 
   return Array.from(map.values()).map(v => v.row);
 }
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`K-apt search app is running at http://localhost:${PORT}`);
+  });
