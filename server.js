@@ -526,6 +526,7 @@ async function handleApi(req, res, parsedUrl) {
     const apiUrl = buildApiUrl(service, endpoint, pageQuery);
     const apiResponse = await requestUrl(apiUrl);
     const pageParsed = parseApiResponse(apiResponse.raw);
+    console.log("[DEBUG RAW]", JSON.stringify(pageParsed).slice(0, 1000));
   
     if (!parsed) parsed = pageParsed;
   
