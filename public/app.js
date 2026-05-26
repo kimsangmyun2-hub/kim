@@ -192,7 +192,8 @@ function renderRows() {
   const start = (currentPage - 1) * pageSize;
   const rows = currentRows.slice(start, start + pageSize);
   $("resultRows").innerHTML =
-    rows.map((row) => {
+    rows.map((row, index) => {
+      const globalIndex = start + index;
       const fileUrl = row.fileSeq
         ? `https://www.k-apt.go.kr/bid/bidFileDownload.do?file_type=bid&file_num=${encodeURIComponent(row.fileSeq)}`
         : row.content && row.content.startsWith("http")
@@ -210,9 +211,17 @@ function renderRows() {
           <td>${escapeHtml(row.noticeDate || "-")}</td>
           <td>${escapeHtml(row.closeDate || "-")}</td>
           <td>${fileUrl ? `<a href="${fileUrl}" target="_blank" rel="noreferrer">열기</a>` : "-"}</td>
+          <td><button type="button" class="ai-btn" data-row-index="${globalIndex}">AI분석</button></td>
         </tr>
       `;
-    }).join("") || `<tr><td colspan="10" class="empty">검색 결과가 없습니다.</td></tr>`;
+    }).join("") || `<tr><td colspan="11" class="empty">검색 결과가 없습니다.</td></tr>`;
+
+  document.querySelectorAll(".ai-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = currentRows[Number(button.dataset.rowIndex)];
+      if (row) openAiAnalysis(row);
+    });
+  });
 }
 
 function renderPagination() {
@@ -228,6 +237,113 @@ function movePage(direction) {
   currentPage = Math.min(totalPages, Math.max(1, currentPage + direction));
   renderRows();
   renderPagination();
+}
+
+function daysUntil(dateText) {
+  if (!dateText) return null;
+  const parsed = new Date(String(dateText).replace(/\./g, "-").replace(/\//g, "-"));
+  if (Number.isNaN(parsed.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  parsed.setHours(0, 0, 0, 0);
+  return Math.ceil((parsed - today) / 86400000);
+}
+
+function containsAny(text, words) {
+  return words.some((word) => text.includes(word));
+}
+
+function analyzeBid(row) {
+  const title = String(row.title || "");
+  const content = String(row.content || row.raw?.bidContent || "");
+  const combined = `${title} ${content}`;
+  const kind = label("codeKind", row.kind);
+  const method = label("codeWay", row.method);
+  const householdCount = Number(String(row.households || "").replace(/[^0-9]/g, "")) || 0;
+  const closeDays = daysUntil(row.closeDate);
+  const risks = [];
+  const checks = [];
+  const notes = [];
+
+  if (kind.includes("제한")) {
+    risks.push("제한경쟁 공고입니다. 실적·면허·기술자·세대수 제한이 과도하지 않은지 확인이 필요합니다.");
+    checks.push("제한경쟁 제한요건이 공사 규모·난이도와 관련성이 있는지 검토");
+  }
+  if (kind.includes("지명")) {
+    risks.push("지명경쟁 공고입니다. 지명 사유와 대상 업체 선정 근거 확인이 필요합니다.");
+    checks.push("지명경쟁 사유와 입주자대표회의 의결 근거 확인");
+  }
+  if (method.includes("직접")) notes.push("직접입찰 방식입니다. 제출서류 접수, 봉인, 개찰 절차 관리가 중요합니다.");
+  if (method.includes("전자")) notes.push("전자입찰 방식입니다. K-APT 전자입찰 마감시간과 첨부파일 누락 여부를 확인하세요.");
+  if (row.state === "3" || title.includes("재공고")) {
+    risks.push("재공고로 보입니다. 기존 유찰 사유와 조건 변경 여부를 확인해야 합니다.");
+    checks.push("동일 조건 재공고인지, 참가자격·예정가격·시방서 변경 여부 확인");
+  }
+  if (closeDays !== null && closeDays <= 3 && closeDays >= 0) risks.push(`마감까지 ${closeDays}일 남았습니다. 현장설명회·서류 준비기간이 촉박할 수 있습니다.`);
+  if (closeDays !== null && closeDays < 0) notes.push("마감일이 지난 공고입니다. 결과조회 또는 계약 진행 단계인지 확인하세요.");
+
+  const longTermRepairWords = ["승강기", "로프", "쉬브", "인버터", "제어반", "CCTV", "방수", "옥상", "외벽", "주차차단기", "수배전", "변압기", "급수", "배관", "펌프", "소방", "도장"];
+  if (containsAny(combined, longTermRepairWords)) checks.push("장기수선계획 반영 여부 및 장기수선충당금 사용 가능 여부 확인");
+
+  const safetyWords = ["소방", "전기", "승강기", "안전", "정밀", "진단", "석면", "방수", "균열"];
+  if (containsAny(combined, safetyWords)) checks.push("관련 법정점검·안전관리 기준 및 전문업 등록 요건 확인");
+
+  const serviceWords = ["청소", "경비", "소독", "재활용", "위탁", "용역", "관리"];
+  if (containsAny(combined, serviceWords)) checks.push("용역계약 기간, 인건비 산출, 최저임금, 보험료 정산 조건 확인");
+
+  if (householdCount >= 1500) notes.push(`대단지(${householdCount.toLocaleString()}세대) 공고입니다. 실적 제한과 투입인력 기준의 적정성을 중점 확인하세요.`);
+  else if (householdCount > 0 && householdCount < 300) notes.push(`소규모 단지(${householdCount.toLocaleString()}세대) 공고입니다. 과도한 실적 제한이 있는지 확인하세요.`);
+  else if (!householdCount) notes.push("세대수 정보가 확인되지 않았습니다. 단지정보 또는 공고문에서 세대수를 별도로 확인하세요.");
+
+  if (!row.fileSeq && !row.content) risks.push("공고문 링크 또는 본문이 없어 세부 조건 확인이 제한됩니다.");
+
+  const riskScore = Math.min(100, (risks.length * 22) + (checks.length * 7) + (closeDays !== null && closeDays <= 3 && closeDays >= 0 ? 10 : 0));
+  const riskLevel = riskScore >= 65 ? "높음" : riskScore >= 35 ? "보통" : "낮음";
+
+  return {
+    summary: [
+      `공고명: ${row.title || "-"}`,
+      `단지명: ${row.apartment || "-"}`,
+      `지역: ${label("bidArea", row.area)}`,
+      `입찰종류/방법: ${kind} / ${method}`,
+      `마감일: ${row.closeDate || "-"}`
+    ],
+    riskLevel,
+    riskScore,
+    risks: risks.length ? risks : ["현재 검색정보 기준으로 즉시 확인되는 고위험 요소는 많지 않습니다."],
+    checks: checks.length ? checks : ["공고문, 참가자격, 제출서류, 보증금, 계약기간, 낙찰방법을 기본 확인하세요."],
+    notes: notes.length ? notes : ["입찰 참가 전 현장설명회 여부와 공고문 첨부파일을 확인하세요."]
+  };
+}
+
+function renderList(items) {
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function openAiAnalysis(row) {
+  const result = analyzeBid(row);
+  const modal = $("aiModal");
+  $("aiModalTitle").textContent = "무료 규칙기반 AI 입찰분석";
+  $("aiModalBody").innerHTML = `
+    <div class="ai-risk ai-risk-${result.riskLevel}">
+      <strong>위험도: ${escapeHtml(result.riskLevel)}</strong>
+      <span>점수 ${result.riskScore}/100</span>
+    </div>
+    <h3>1. 공고 요약</h3>
+    ${renderList(result.summary)}
+    <h3>2. 주의할 위험요소</h3>
+    ${renderList(result.risks)}
+    <h3>3. 실무 체크포인트</h3>
+    ${renderList(result.checks)}
+    <h3>4. 메모</h3>
+    ${renderList(result.notes)}
+    <p class="ai-disclaimer">※ 이 분석은 무료 규칙기반 자동분석입니다. 최종 판단은 공고문 원문, 관리규약, 입주자대표회의 의결자료를 함께 확인해야 합니다.</p>
+  `;
+  modal.hidden = false;
+}
+
+function closeAiModal() {
+  $("aiModal").hidden = true;
 }
 
 function escapeHtml(value) {
@@ -326,6 +442,13 @@ $("clearBtn").addEventListener("click", clearAll);
 $("exportBtn").addEventListener("click", exportCsv);
 $("prevPageBtn").addEventListener("click", () => movePage(-1));
 $("nextPageBtn").addEventListener("click", () => movePage(1));
+$("aiCloseBtn")?.addEventListener("click", closeAiModal);
+$("aiModal")?.addEventListener("click", (event) => {
+  if (event.target.id === "aiModal") closeAiModal();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $("aiModal") && !$("aiModal").hidden) closeAiModal();
+});
 
 updateMode();
 clearAll();
