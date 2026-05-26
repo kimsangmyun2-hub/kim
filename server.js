@@ -302,18 +302,64 @@ function firstValue(item, keys) {
   return "";
 }
 
+function cleanDigits(value) {
+  return String(value || "").replace(/[^\d]/g, "");
+}
+
+function getAptCode(item) {
+  return firstValue(item, [
+    "aptCode",
+    "kaptCode",
+    "bidKaptCode",
+    "hsmpCd",
+    "kaptCd",
+    "단지코드",
+    "K-apt단지코드",
+    "KAPT코드",
+    "공동주택코드"
+  ]);
+}
+
+function getAptName(item) {
+  return firstValue(item, [
+    "bidKaptName",
+    "bidKaptname",
+    "hsmpNm",
+    "kaptName",
+    "aptName",
+    "apartment",
+    "단지명",
+    "공동주택명",
+    "아파트명"
+  ]);
+}
+
 function normalizeApartmentName(value) {
   return String(value || "")
     .replace(/\([^)]*\)/g, "")
+    .replace(/\[[^\]]*\]/g, "")
+    .replace(/아파트|APT|apt|단지|주공|공동주택/g, "")
     .replace(/\s+/g, "")
     .trim()
     .toLowerCase();
 }
 
 function normalizeApartmentRecord(item) {
-  const aptCode = firstValue(item, ["aptCode", "kaptCode", "단지코드", "K-apt단지코드", "KAPT코드", "공동주택코드"]);
-  const name = firstValue(item, ["aptName", "kaptName", "apartment", "단지명", "공동주택명", "아파트명"]);
-  const households = firstValue(item, ["households", "kaptdaCnt", "kaptDaCnt", "hshldCo", "hshldCnt", "세대수", "총세대수"]);
+  const aptCode = getAptCode(item);
+  const name = getAptName(item);
+  const households = firstValue(item, [
+    "households",
+    "kaptdaCnt",
+    "kaptDaCnt",
+    "hshldCo",
+    "hshldCnt",
+    "hshldCoCnt",
+    "totHshldCnt",
+    "totalHouseholds",
+    "세대수",
+    "총세대수",
+    "총 세대수"
+  ]);
   const area = firstValue(item, ["bidArea", "sidoCode", "시도코드", "지역코드", "법정동시도코드"]);
   const address = firstValue(item, ["address", "도로명주소", "주소", "법정동주소"]);
   return {
@@ -363,29 +409,45 @@ function loadApartmentData() {
 }
 
 function findApartmentRecord(item) {
-  const code = String(item?.aptCode || item?.kaptCode || "").trim();
+  const code = String(getAptCode(item) || "").trim();
   if (code && apartmentData.byCode.has(code)) return apartmentData.byCode.get(code);
 
-  const nameKey = normalizeApartmentName(item?.bidKaptname || item?.bidKaptName || item?.hsmpNm || item?.kaptName);
+  const nameKey = normalizeApartmentName(getAptName(item));
   if (nameKey && apartmentData.byName.has(nameKey)) return apartmentData.byName.get(nameKey);
+
+  if (nameKey) {
+    for (const [savedName, record] of apartmentData.byName.entries()) {
+      if (savedName && (savedName.includes(nameKey) || nameKey.includes(savedName))) {
+        return record;
+      }
+    }
+  }
+
   return null;
 }
 
 function findHouseholds(item) {
   const candidates = [
+    "households",
     "kaptdaCnt",
     "kaptDaCnt",
     "kaptDongCnt",
     "hshldCo",
     "hshldCnt",
-    "householdCount",
-    "households"
+    "hshldCoCnt",
+    "totHshldCnt",
+    "totalHouseholds",
+    "세대수",
+    "총세대수",
+    "총 세대수"
   ];
+
   for (const key of candidates) {
     if (item && item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== "") {
-      return String(item[key]).trim();
+      return cleanDigits(item[key]);
     }
   }
+
   return "";
 }
 
@@ -439,7 +501,7 @@ async function enrichItemsWithAptInfo(items, serviceKey) {
     ...new Set(
       items
         .filter((item) => !findApartmentRecord(item)?.households)
-        .map((item) => item.aptCode)
+        .map((item) => getAptCode(item))
         .filter(Boolean)
     )
   ].slice(0, 50);
@@ -456,7 +518,7 @@ async function enrichItemsWithAptInfo(items, serviceKey) {
 
   return items.map((item) => {
     const apartmentRecord = findApartmentRecord(item);
-    const info = aptInfoCache.get(item.aptCode);
+    const info = aptInfoCache.get(getAptCode(item));
     const textHouseholds = extractHouseholdsFromText(item.bidContent);
     const dataHouseholds = apartmentRecord?.households || "";
     if (!info) {
