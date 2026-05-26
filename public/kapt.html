@@ -27,7 +27,7 @@
     <meta itemprop="name" content="K-apt 입찰 검색" />
     <meta itemprop="description" content="K-apt 입찰공고, 입찰결과, 낙찰금액 분석 도구" />
     <meta itemprop="image" content="https://kapt-search-app.onrender.com/assets/kapt-share.png?v=20260520-1" />
-    <link rel="stylesheet" href="./styles.css?v=20260520-2" />
+    <link rel="stylesheet" href="./styles.css?v=20260526-ai1" />
   </head>
   <body>
     <main class="shell">
@@ -193,6 +193,7 @@
                 <th>공고일</th>
                 <th>마감일</th>
                 <th>공고문</th>
+                <th>AI분석</th>
               </tr>
             </thead>
             <tbody id="resultRows"></tbody>
@@ -208,6 +209,16 @@
       <footer class="footer">기획·제작: 관리사무소장 김상면</footer>
     </main>
 
-    <script src="./app.js"></script>
+    <div id="aiModal" class="ai-modal" hidden>
+      <div class="ai-modal-card">
+        <div class="ai-modal-head">
+          <h2 id="aiModalTitle">무료 규칙기반 AI 입찰분석</h2>
+          <button id="aiCloseBtn" type="button" class="ghost">닫기</button>
+        </div>
+        <div id="aiModalBody" class="ai-modal-body"></div>
+      </div>
+    </div>
+
+    <script src="./app.js?v=20260526-ai1"></script>
   </body>
 </html>
