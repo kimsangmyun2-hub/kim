@@ -592,10 +592,10 @@ const maxWon = amountCount ? Math.max(...amountRows.map((r) => r.bidAmountWon)) 
     dataset,
     mode,
     endpoint: endpoint.path,
-    requestedUrl: apiUrl.toString().replace(encodeURIComponent(serviceKey), "SERVICE_KEY").replace(serviceKey, "SERVICE_KEY"),
-    status: apiResponse.status,
+    requestedUrl: "multiple pages",
+    status: 200,
     cached: false,
-    rawSnippet: apiResponse.status === 200 ? undefined : apiResponse.raw.slice(0, 500),
+    rawSnippet: undefined,
     ...parsed,
     items: finalRows
   };
@@ -609,9 +609,7 @@ payload.summary = {
   groupReNotice
 };
   
-  if (apiResponse.status === 200) {
-    setCached(key, payload);
-  }
+  setCached(key, payload);
   send(res, 200, JSON.stringify(payload));
 }
 
