@@ -884,3 +884,17 @@ td a {
     display: grid;
   }
 }
+.case-image-logo img {
+  width: 55% !important;
+  max-width: 620px !important;
+  max-height: 360px !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+.case-image-logo {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
