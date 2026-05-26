@@ -529,7 +529,11 @@ async function handleApi(req, res, parsedUrl) {
   
     if (!parsed) parsed = pageParsed;
   
-    const pageItems = pageParsed.items || [];
+    const pageItems =
+      pageParsed.items ||
+      pageParsed.item ||
+      pageParsed.data ||
+      [];
     allItems = allItems.concat(pageItems);
   
     const totalCount = Number(pageParsed.totalCount || allItems.length || 0);
