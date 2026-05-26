@@ -818,41 +818,10 @@ function parseBidAmountToWon(value) {
 function pickFinalNoticeRows(rows) {
   if (!Array.isArray(rows)) return [];
 
-  const map = new Map();
-
-  rows.forEach((row, idx) => {
-    const title = String(row.공고명 || row.bidNtceNm || row.bidTitle || '').trim();
-    const apt = String(row.단지명 || row.aptNm || row.bidKaptName || '').trim();
-    const method = String(row.입찰방법 || row.bidMthdNm || row.bidMethod || '').trim();
-    const date = String(row.공고일 || row.bidDt || row.ntceDate || row.noticeDate || '').trim();
-    const noticeNo = String(row.공고번호 || row.bidNtceNo || row.noticeNo || '').trim();
-    const ts = Date.parse(date.replace(/\./g, '-')) || 0;
-
-    let key = '';
-    if (noticeNo) key = `NO:${noticeNo}`;
-    else if (title || apt || method || date) key = `TXT:${title}__${apt}__${method}__${date}`;
-    else key = `ROW:${idx}`;
-
-    const current = map.get(key);
-    if (!current) {
-      map.set(key, { row, ts });
-      return;
-    }
-
-    if (ts > current.ts) {
-      map.set(key, { row, ts });
-      return;
-    }
-
-    const currAmt = parseBidAmountToWon(current.row.낙찰금액 || current.row.sucsfbidPrc || '');
-    const nextAmt = parseBidAmountToWon(row.낙찰금액 || row.sucsfbidPrc || '');
-    if (ts === current.ts && nextAmt && !currAmt) {
-      map.set(key, { row, ts });
-    }
-  });
-
-  return Array.from(map.values()).map(v => v.row);
+  // 중복 제거 임시 비활성화
+  return rows;
 }
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`K-apt search app is running at http://localhost:${PORT}`);
-  });
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`K-apt search app is running at http://localhost:${PORT}`);
+});
