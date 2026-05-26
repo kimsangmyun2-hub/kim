@@ -63,14 +63,31 @@
       flex: 0 0 72px !important;
       object-fit: contain !important;
     }
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin: 0 0 14px;
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    
+    .hero-logo {
+      width: 82px;
+      height: 82px;
+      object-fit: contain;
+      flex: 0 0 82px;
+    }
     @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="card">
-      <h1 style="margin:0 0 14px; font-size:48px; font-weight:900; letter-spacing:-1px;">
-        아파트관리 통합검색
+      <h1 class="hero-title">
+        <img src="/assets/main-logo.png" alt="아파트관리 통합검색 로고" class="hero-logo" />
+        <span>아파트관리 통합검색</span>
       </h1>
       <p style="margin:0;color:#64748b;font-size:20px;font-weight:500;">
         원하는 서비스를 선택해 이동하세요.
