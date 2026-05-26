@@ -509,7 +509,12 @@ async function handleApi(req, res, parsedUrl) {
   }
 
   const key = cacheKey(dataset, mode, query);
-  const cached = null; // 임시: 원인 확인용으로 캐시 비활성화
+  const cached = getCached(key);
+  if (cached) {
+    cached.cached = true;
+    send(res, 200, JSON.stringify(cached));
+    return;
+  }
   const service = dataset === "result" ? RESULT_SERVICE : NOTICE_SERVICE;
 
   const pageSize = Number(query.numOfRows || 50);
@@ -526,9 +531,7 @@ async function handleApi(req, res, parsedUrl) {
     const apiUrl = buildApiUrl(service, endpoint, pageQuery);
     const apiResponse = await requestUrl(apiUrl);
     const pageParsed = parseApiResponse(apiResponse.raw);
-    console.log("[RAW API]", apiResponse.raw.slice(0, 1500));
-    console.log("[DEBUG RAW]", JSON.stringify(pageParsed).slice(0, 1000));
-  
+      
     if (!parsed) parsed = pageParsed;
   
     const pageItems =
