@@ -35,7 +35,7 @@
     .case-no { font-weight:900; color:#0f766e; margin-bottom:5px; }
     .case-title { font-weight:900; margin-bottom:5px; }
     .case-summary { color:#475569; line-height:1.6; }
-    .case-state { color:#64748b; font-size:13px; line-height:1.6; }
+    .case-state { color:#64748b; font-size:13px; line-height:1.6; margin-bottom:10px; }
     mark { background:#d9f99d; padding:0 3px; border-radius:4px; }
     @media (max-width: 820px) { .top, .refs { display:grid; } .question-box { grid-template-columns:1fr; } h1 { font-size:30px; } }
   </style>
@@ -61,16 +61,17 @@
           <option value="법률">법률</option>
           <option value="하자">하자</option>
         </select>
-        <input id="question" type="text" placeholder="예: 장기수선충당금으로 CCTV 교체 가능한가?" />
+        <input id="question" type="text" placeholder="예: 장기수선충당금 과태료 부과 시 책임은?" />
         <button id="askBtn" type="button">질문</button>
       </div>
       <div class="examples">
+        <button class="chip" type="button">장기수선충당금 과태료 부과</button>
         <button class="chip" type="button">장기수선충당금 CCTV 교체</button>
         <button class="chip" type="button">하자보수 방수공사 책임</button>
         <button class="chip" type="button">입주자대표회의 의결 정족수</button>
         <button class="chip" type="button">관리비 소멸시효</button>
       </div>
-      <p class="notice">※ 판례앱 API가 연결되면 사건번호와 핵심내용이 자동 표시됩니다. API 미연결 시 판례앱 열기 버튼으로 이동합니다.</p>
+      <p class="notice">※ 질문에서 핵심 법률키워드를 자동 추출해 판례앱 API를 검색합니다. 예: “장기수선충당금 관련 과태료” → “장기수선충당금”, “과태료” 중심 검색.</p>
     </section>
 
     <section id="result" class="result"></section>
@@ -80,10 +81,17 @@
     const PANAPP_URL = "https://panapp.duckdns.org";
     const CASE_API_URL = `${PANAPP_URL}/api/cases/search`;
     const docs = [
-      { category:"관리비", keywords:["장기수선", "장충", "CCTV", "승강기", "방수", "주차차단기"], title:"장기수선충당금 검토", answer:["장기수선계획에 포함된 주요시설의 전면교체·주요부품 교체는 장기수선충당금 사용 여부를 우선 검토합니다.", "공고 또는 공사 전에 장기수선계획 반영 여부, 입주자대표회의 의결, 공사 범위가 수선유지비인지 장충금 대상인지 구분해야 합니다.", "CCTV·승강기·방수·주차차단기 등은 공사 범위와 계획 반영 여부에 따라 판단이 달라질 수 있습니다."] },
+      { category:"관리비", keywords:["장기수선", "장충", "CCTV", "승강기", "방수", "주차차단기", "과태료", "용도외"], title:"장기수선충당금 검토", answer:["장기수선충당금은 장기수선계획에 따른 주요시설의 교체·보수에 사용하는 것이 원칙입니다.", "과태료가 부과된 경우에는 먼저 장기수선충당금의 용도외 사용 여부, 의결 과정, 장기수선계획 반영 여부, 책임 주체를 나누어 검토해야 합니다.", "과태료 납부 재원은 관리규약·예산 편성·책임 귀속 문제와 연결되므로, 단순히 잡수입으로 처리하기보다는 입주자대표회의 의결과 책임 범위 검토가 필요합니다."] },
       { category:"하자", keywords:["하자", "방수", "누수", "균열", "담보책임", "보수"], title:"하자보수 및 손해배상 검토", answer:["하자 사안은 발생 위치, 사용검사일, 하자담보책임기간, 보수 요청 및 통지 자료가 중요합니다.", "방수·누수·균열은 사진, 보수이력, 전문가 의견, 입주자 민원자료를 함께 정리하는 것이 좋습니다.", "분쟁 가능성이 있으면 하자보수 청구와 손해배상 청구 가능성을 구분해 검토해야 합니다."] },
       { category:"법률", keywords:["입주자대표회의", "의결", "정족수", "동별대표", "선관위", "해임"], title:"입주자대표회의·선거관리 법률 검토", answer:["의결 가능 여부는 관리규약, 공동주택관리법령, 정원과 현원, 안건의 성격을 함께 보아야 합니다.", "동별대표자 해임·보궐선거·선관위 의결은 절차 하자가 발생하기 쉬우므로 공고, 통지, 회의록, 투표자료를 보존해야 합니다.", "즉시 상정, 재심의, 정족수 문제는 사안별로 위법 여부가 달라질 수 있습니다."] },
       { category:"관리비", keywords:["관리비", "소멸시효", "연체", "징수", "잡수입", "잡손실"], title:"관리비·회계 처리 검토", answer:["관리비 채권은 청구 시점, 납부고지, 연체관리, 소멸시효 중단 여부를 확인해야 합니다.", "잡수입·잡손실 처리는 공동주택 회계처리기준과 관리규약상 예산 편성 여부를 함께 검토하는 것이 안전합니다.", "소송비용, 과태료, 손해배상 지출은 책임 주체와 회계 처리 항목을 분리해 검토해야 합니다."] }
+    ];
+
+    const CASE_KEYWORDS = [
+      "장기수선충당금", "장기수선계획", "장기수선", "장충금", "과태료", "용도외", "잡수입", "잡손실",
+      "입주자대표회의", "동별대표", "의결", "정족수", "선거관리위원회", "해임",
+      "관리비", "소멸시효", "연체료", "지연손해금", "손해배상",
+      "하자보수", "하자", "방수", "누수", "담보책임", "승강기", "CCTV", "주차차단기"
     ];
 
     function escapeHtml(value) {
@@ -96,42 +104,73 @@
       return doc.keywords.reduce((score, keyword) => score + (text.includes(keyword.toLowerCase()) ? 3 : 0), 0);
     }
 
-    function buildPanappLink() {
-      return PANAPP_URL;
+    function extractCaseQueries(q) {
+      const normalized = q.replace(/[,.!?()\[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+      const found = CASE_KEYWORDS.filter(keyword => normalized.includes(keyword));
+      const fallbackWords = normalized.split(" ").filter(word => word.length >= 2 && !["관련", "대하여", "경우", "때", "가능", "여부", "어떻게", "하는지", "받았을때", "받았을"].includes(word));
+      const queries = [];
+
+      if (found.includes("장기수선충당금")) queries.push("장기수선충당금");
+      if (found.includes("장기수선계획")) queries.push("장기수선계획");
+      if (found.includes("과태료")) queries.push("과태료");
+      if (found.includes("하자보수")) queries.push("하자보수");
+      if (found.includes("손해배상")) queries.push("손해배상");
+      if (found.includes("입주자대표회의")) queries.push("입주자대표회의");
+      if (found.includes("관리비")) queries.push("관리비");
+
+      if (found.length >= 2) queries.push(found.slice(0, 3).join(" "));
+      if (found.length) queries.push(found[0]);
+      if (fallbackWords.length) queries.push(fallbackWords.slice(0, 2).join(" "));
+      queries.push(normalized);
+
+      return [...new Set(queries.filter(Boolean))].slice(0, 5);
+    }
+
+    function buildPanappLink(q) {
+      const keyword = extractCaseQueries(q)[0] || q;
+      return `${PANAPP_URL}/search?case_no=&court=&decision_date=&keyword=${encodeURIComponent(keyword)}`;
     }
 
     async function fetchCases(q) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 5000);
-      try {
-        const response = await fetch(`${CASE_API_URL}?q=${encodeURIComponent(q)}&limit=3`, { signal: controller.signal });
-        if (!response.ok) throw new Error("case api failed");
-        const data = await response.json();
-        return Array.isArray(data.items) ? data.items : [];
-      } catch {
-        return null;
-      } finally {
-        clearTimeout(timer);
+      const queries = extractCaseQueries(q);
+      for (const query of queries) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        try {
+          const response = await fetch(`${CASE_API_URL}?q=${encodeURIComponent(query)}&limit=3`, { signal: controller.signal });
+          if (!response.ok) throw new Error("case api failed");
+          const data = await response.json();
+          const items = Array.isArray(data.items) ? data.items : [];
+          if (items.length) return { items, query };
+        } catch {
+          return null;
+        } finally {
+          clearTimeout(timer);
+        }
       }
+      return { items: [], query: queries[0] || q };
     }
 
-    function renderCases(cases, q) {
-      if (cases === null) {
+    function renderCases(caseResult, q) {
+      if (caseResult === null) {
         return `
           <div class="case-state">
             판례앱 검색 API가 아직 연결되지 않았거나 CORS 허용이 필요합니다.<br>
-            판례앱에 <code>/api/cases/search</code> 추가 후 자동으로 사건번호와 핵심내용이 표시됩니다.
+            판례앱에 <code>/api/cases/search</code> 연결 후 자동으로 사건번호와 핵심내용이 표시됩니다.
           </div>
           <a href="${buildPanappLink(q)}" target="_blank" rel="noreferrer">판례앱 열기</a>
         `;
       }
+      const cases = caseResult.items || [];
+      const query = caseResult.query || q;
       if (!cases.length) {
         return `
-          <div class="case-state">질문과 직접 매칭되는 판례를 찾지 못했습니다.</div>
+          <div class="case-state">판례 검색어 <strong>${escapeHtml(query)}</strong> 기준으로 직접 매칭되는 판례를 찾지 못했습니다.</div>
           <a href="${buildPanappLink(q)}" target="_blank" rel="noreferrer">판례앱에서 직접 검색</a>
         `;
       }
       return `
+        <div class="case-state">판례 검색어: <strong>${escapeHtml(query)}</strong></div>
         <div class="case-list">
           ${cases.map((item) => `
             <div class="case-item">
@@ -150,14 +189,14 @@
       const category = document.getElementById("category").value;
       const result = document.getElementById("result");
       if (!q) {
-        result.innerHTML = `<div class="answer"><h2>질문을 입력해주세요.</h2><p>예: 장기수선충당금으로 승강기 쉬브 교체가 가능한가?</p></div>`;
+        result.innerHTML = `<div class="answer"><h2>질문을 입력해주세요.</h2><p>예: 장기수선충당금 관련 과태료를 부과받았을 때 책임은?</p></div>`;
         return;
       }
       const ranked = docs.map(doc => ({ ...doc, score: scoreDoc(doc, q, category) })).filter(doc => doc.score > 0).sort((a,b) => b.score - a.score);
       const picked = ranked[0] || docs.find(doc => category === "all" || doc.category === category) || docs[0];
       const related = ranked.slice(0, 3).length ? ranked.slice(0, 3) : [picked];
-      result.innerHTML = `<div class="answer"><h2>검색 중입니다.</h2><p>문서 답변과 관련 판례를 확인하고 있습니다.</p></div>`;
-      const cases = await fetchCases(q);
+      result.innerHTML = `<div class="answer"><h2>검색 중입니다.</h2><p>질문 답변과 관련 판례를 함께 확인하고 있습니다.</p></div>`;
+      const caseResult = await fetchCases(q);
       result.innerHTML = `
         <div class="answer">
           <h2>${escapeHtml(picked.title)}</h2>
@@ -167,7 +206,7 @@
         <div class="refs">
           <div class="ref-card">
             <h3>관련 판례 사건번호·핵심내용</h3>
-            ${renderCases(cases, q)}
+            ${renderCases(caseResult, q)}
           </div>
           <div class="ref-card">
             <h3>관련 문서 후보</h3>
