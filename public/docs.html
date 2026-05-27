@@ -18,8 +18,7 @@
     select, input, button { height:48px; border-radius:12px; border:1px solid #cbd5e1; font:inherit; }
     select, input { padding:0 14px; background:#fff; }
     button { border:0; background:#0f766e; color:#fff; font-weight:900; cursor:pointer; }
-    .examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
-    .chip { border:1px solid #dbe3ea; background:#f8fafc; color:#334155; padding:8px 11px; border-radius:999px; font-size:13px; font-weight:800; cursor:pointer; }
+    .notice { margin-top:16px; color:#64748b; font-size:13px; line-height:1.7; }
     .result { margin-top:18px; display:grid; gap:14px; }
     .answer { border:1px solid #dbe3ea; border-radius:18px; padding:20px; background:#f8fafc; line-height:1.75; }
     .answer h2 { margin:0 0 10px; font-size:20px; }
@@ -29,14 +28,12 @@
     .ref-card h3 { margin:0 0 8px; font-size:17px; }
     .ref-card p { margin:0 0 12px; color:#64748b; line-height:1.6; }
     .ref-card a { display:inline-flex; text-decoration:none; background:#0f766e; color:#fff; font-weight:900; padding:9px 12px; border-radius:999px; }
-    .notice { margin-top:16px; color:#64748b; font-size:13px; line-height:1.7; }
     .case-list { display:grid; gap:10px; margin-top:10px; }
     .case-item { border:1px solid #e2e8f0; background:#f8fafc; border-radius:14px; padding:13px; }
     .case-no { font-weight:900; color:#0f766e; margin-bottom:5px; }
     .case-title { font-weight:900; margin-bottom:5px; }
     .case-summary { color:#475569; line-height:1.6; }
     .case-state { color:#64748b; font-size:13px; line-height:1.6; margin-bottom:10px; }
-    mark { background:#d9f99d; padding:0 3px; border-radius:4px; }
     @media (max-width: 820px) { .top, .refs { display:grid; } .question-box { grid-template-columns:1fr; } h1 { font-size:30px; } }
   </style>
 </head>
@@ -61,17 +58,10 @@
           <option value="법률">법률</option>
           <option value="하자">하자</option>
         </select>
-        <input id="question" type="text" placeholder="예: 장기수선충당금 과태료 부과 시 책임은?" />
+        <input id="question" type="text" placeholder="예: 장기수선충당금 관련 과태료를 부과받았을 때 책임은?" />
         <button id="askBtn" type="button">질문</button>
       </div>
-      <div class="examples">
-        <button class="chip" type="button">장기수선충당금 과태료 부과</button>
-        <button class="chip" type="button">장기수선충당금 CCTV 교체</button>
-        <button class="chip" type="button">하자보수 방수공사 책임</button>
-        <button class="chip" type="button">입주자대표회의 의결 정족수</button>
-        <button class="chip" type="button">관리비 소멸시효</button>
-      </div>
-      <p class="notice">※ 질문에서 핵심 법률키워드를 자동 추출해 판례앱 API를 검색합니다. 예: “장기수선충당금 관련 과태료” → “장기수선충당금”, “과태료” 중심 검색.</p>
+      <p class="notice">※ 질문에서 핵심 법률키워드를 자동 추출해 판례앱 API를 검색합니다. 판례 상세 확인은 판례앱 로그인 후 가능합니다.</p>
     </section>
 
     <section id="result" class="result"></section>
@@ -87,12 +77,7 @@
       { category:"관리비", keywords:["관리비", "소멸시효", "연체", "징수", "잡수입", "잡손실"], title:"관리비·회계 처리 검토", answer:["관리비 채권은 청구 시점, 납부고지, 연체관리, 소멸시효 중단 여부를 확인해야 합니다.", "잡수입·잡손실 처리는 공동주택 회계처리기준과 관리규약상 예산 편성 여부를 함께 검토하는 것이 안전합니다.", "소송비용, 과태료, 손해배상 지출은 책임 주체와 회계 처리 항목을 분리해 검토해야 합니다."] }
     ];
 
-    const CASE_KEYWORDS = [
-      "장기수선충당금", "장기수선계획", "장기수선", "장충금", "과태료", "용도외", "잡수입", "잡손실",
-      "입주자대표회의", "동별대표", "의결", "정족수", "선거관리위원회", "해임",
-      "관리비", "소멸시효", "연체료", "지연손해금", "손해배상",
-      "하자보수", "하자", "방수", "누수", "담보책임", "승강기", "CCTV", "주차차단기"
-    ];
+    const CASE_KEYWORDS = ["장기수선충당금", "장기수선계획", "장기수선", "장충금", "과태료", "용도외", "잡수입", "잡손실", "입주자대표회의", "동별대표", "의결", "정족수", "선거관리위원회", "해임", "관리비", "소멸시효", "연체료", "지연손해금", "손해배상", "하자보수", "하자", "방수", "누수", "담보책임", "승강기", "CCTV", "주차차단기"];
 
     function escapeHtml(value) {
       return String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
@@ -109,26 +94,23 @@
       const found = CASE_KEYWORDS.filter(keyword => normalized.includes(keyword));
       const fallbackWords = normalized.split(" ").filter(word => word.length >= 2 && !["관련", "대하여", "경우", "때", "가능", "여부", "어떻게", "하는지", "받았을때", "받았을"].includes(word));
       const queries = [];
-
       if (found.includes("장기수선충당금")) queries.push("장기수선충당금");
-      if (found.includes("장기수선계획")) queries.push("장기수선계획");
       if (found.includes("과태료")) queries.push("과태료");
+      if (found.includes("잡수입")) queries.push("잡수입");
+      if (found.includes("장기수선계획")) queries.push("장기수선계획");
       if (found.includes("하자보수")) queries.push("하자보수");
       if (found.includes("손해배상")) queries.push("손해배상");
       if (found.includes("입주자대표회의")) queries.push("입주자대표회의");
       if (found.includes("관리비")) queries.push("관리비");
-
       if (found.length >= 2) queries.push(found.slice(0, 3).join(" "));
       if (found.length) queries.push(found[0]);
       if (fallbackWords.length) queries.push(fallbackWords.slice(0, 2).join(" "));
       queries.push(normalized);
-
       return [...new Set(queries.filter(Boolean))].slice(0, 5);
     }
 
-    function buildPanappLink(q) {
-      const keyword = extractCaseQueries(q)[0] || q;
-      return `${PANAPP_URL}/search?case_no=&court=&decision_date=&keyword=${encodeURIComponent(keyword)}`;
+    function buildPanappLink() {
+      return `${PANAPP_URL}/login`;
     }
 
     async function fetchCases(q) {
@@ -153,21 +135,12 @@
 
     function renderCases(caseResult, q) {
       if (caseResult === null) {
-        return `
-          <div class="case-state">
-            판례앱 검색 API가 아직 연결되지 않았거나 CORS 허용이 필요합니다.<br>
-            판례앱에 <code>/api/cases/search</code> 연결 후 자동으로 사건번호와 핵심내용이 표시됩니다.
-          </div>
-          <a href="${buildPanappLink(q)}" target="_blank" rel="noreferrer">판례앱 열기</a>
-        `;
+        return `<div class="case-state">판례앱 API 연결을 확인해야 합니다.</div><a href="${buildPanappLink()}" target="_blank" rel="noreferrer">판례앱 로그인</a>`;
       }
       const cases = caseResult.items || [];
       const query = caseResult.query || q;
       if (!cases.length) {
-        return `
-          <div class="case-state">판례 검색어 <strong>${escapeHtml(query)}</strong> 기준으로 직접 매칭되는 판례를 찾지 못했습니다.</div>
-          <a href="${buildPanappLink(q)}" target="_blank" rel="noreferrer">판례앱에서 직접 검색</a>
-        `;
+        return `<div class="case-state">판례 검색어 <strong>${escapeHtml(query)}</strong> 기준으로 직접 매칭되는 판례를 찾지 못했습니다.</div><a href="${buildPanappLink()}" target="_blank" rel="noreferrer">판례앱 로그인</a>`;
       }
       return `
         <div class="case-state">판례 검색어: <strong>${escapeHtml(query)}</strong></div>
@@ -180,7 +153,7 @@
             </div>
           `).join("")}
         </div>
-        <a href="${buildPanappLink(q)}" target="_blank" rel="noreferrer">판례앱 자세히 보기</a>
+        <a href="${buildPanappLink()}" target="_blank" rel="noreferrer">판례앱 로그인 후 상세보기</a>
       `;
     }
 
@@ -218,12 +191,6 @@
 
     document.getElementById("askBtn").addEventListener("click", ask);
     document.getElementById("question").addEventListener("keydown", (event) => { if (event.key === "Enter") ask(); });
-    document.querySelectorAll(".chip").forEach(button => {
-      button.addEventListener("click", () => {
-        document.getElementById("question").value = button.textContent;
-        ask();
-      });
-    });
   </script>
 </body>
 </html>
