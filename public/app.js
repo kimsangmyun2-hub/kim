@@ -385,7 +385,15 @@ async function search() {
     const response = await fetch(`/api/kapt?${params}`);
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || "조회 중 오류가 발생했습니다.");
-    allRows = (data.items || []).map(normalizeItem);
+    allRows = (data.items || [])
+      .map(normalizeItem)
+      .filter((row) => {
+        const households = Number(String(row.households || "0").replace(/[^0-9]/g, ""));
+        const min = householdMin ? Number(householdMin) : 0;
+        const max = householdMax ? Number(householdMax) : Infinity;
+    
+        return households >= min && households <= max;
+      });
     applyRegionFilter();
     const cacheText = data.cached ? "저장된 검색 결과를 사용했습니다." : "K-apt API에서 새로 조회했습니다.";
     const apiStatus = data.status && data.status !== 200 ? ` · API 상태: ${data.status}` : "";
